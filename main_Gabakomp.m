@@ -1,4 +1,4 @@
-%2nd commit
+%3rd commit
 clc;    % Clear the command window.
 close all;  % Close all figures (except those of imtool.)
 imtool close all;  % Close all imtool figures.
