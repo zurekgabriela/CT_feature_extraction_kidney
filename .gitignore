@@ -1,0 +1,9 @@
+
+*.mat
+*.mhd
+*.raw
+Data/AT47_1/Untitled.txt
+*.vtk
+Skrypty i dane/breast-cancer-wisconsin-names.txt
+Skrypty i dane/breast-cancer-wisconsin.txt
+Skrypty i dane/breast_cancer_classification.asv
