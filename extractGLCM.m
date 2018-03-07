@@ -7,6 +7,7 @@ function [ stats ] = extractGLCM( image, class, radius )
 
 %% Obliczenie œredniej dla wokseli 
 stats = cell(size(image));
+stats(find(cellfun(@isempty,stats))) = {[nan nan nan nan]};
 
 for vol = (radius + 1) : (z - radius)
     vol
