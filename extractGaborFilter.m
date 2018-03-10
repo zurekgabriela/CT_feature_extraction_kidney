@@ -17,16 +17,17 @@ orientation = 0:deltaTheta:(180-deltaTheta);
 
 g = gabor(wavelength,orientation);
 
-% extract Gabor magnitude features from source image. 
-nonEmptyVolfirst = nonEmptyVol(1);
-features = [];
 % do obliczenia statystyk bierzemy bloki 3x3
 radius = 1;
+features = [];
 
-for vol = nonEmptyVolsingle(1) : nonEmptyVolsingle(end)
+for i = 1 : size(nonEmptyVolsingle, 1);
+    vol = nonEmptyVolsingle(i);
     vol
     % obliczenie indeksów od 1 do ...
-    idx = find(nonEmptyVol == nonEmptyVolsingle(vol+1-nonEmptyVolfirst));
+    idx = find(nonEmptyVol == vol);
+    
+    % extract Gabor magnitude features from source image. 
     GaborMag = imgaborfilt( image(:,:,vol), g );
     GaborMagStats = cell(size(image, 1), size(image, 2));
 
