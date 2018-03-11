@@ -182,15 +182,14 @@ for i = 1:length(CT)
 %     sprintf('pobrano wszystkie cechy %s!',CT(i).patient)
 end
 
-%% 
-
-% Zapisanie danych
+%% Zapisanie danych
 
 for i = 1:length(CT)
     fname = sprintf('samples_%s', CT(i).patient);
-    vname = genvarname(sprintf('samples_%s', CT(i).patient));
+    % vname = genvarname(sprintf('samples_%s', CT(i).patient));
+    vname = 'features';
     eval([vname '= CT(i).samples;']);
-    save(fname, vname);
+    save(strcat('samples\', fname), vname);
 end
 
 % Czyszczenie pamiêci z niepotrzebnych danych

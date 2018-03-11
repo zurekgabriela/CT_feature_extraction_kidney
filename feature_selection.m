@@ -1,18 +1,52 @@
+clc;    % Clear the command window.
+close all;  % Close all figures (except those of imtool.)
+imtool close all;  % Close all imtool figures.
+clear;  % Erase all existing variables.
+workspace;  % Make sure the workspace panel is showing.
+
 %% Load data
 
+myFolder = 'CT_feature_extraction_kidney'; % Define your working folder
+if ~isdir(myFolder)
+  errorMessage = sprintf('Error: The following folder does not exist:\n%s', myFolder);
+  uiwait(warndlg(errorMessage));
+  return;
+end
 
+list = dir('samples');
+iter = 1;
+for i = 1:length(list);
+    if ~strcmp(list(i).name, '.') && ~strcmp(list(i).name, '..')
+        tempStruct = load(fullfile('..', 'CT_feature_extraction_kidney', 'samples', list(i).name));
+        featureStruct(iter).name = list(i).name(1:end-4);
+        featureStruct(iter).features = tempStruct(1).features;
+        iter = iter + 1;
+    end
+end
 
-%% Próbki do klasyfikacji -> wektor
+clear i; clear list; clear myFolder; clear tempStruct; clear iter;
 
 % Po³¹czenie danych z kilku zdjêæ
-classifyData = [];
-tic
-for i = 1:length(CT)
-    classifyData = [classifyData; CT(i).samples];
-end
-toc
 
-% Mix kolejnoœci danych
+samples = [];
+for i = 1:length(featureStruct)
+    samples = [samples; featureStruct(i).features];
+end
+
+clear featureStruct; clear i;
+
+%% Feature selection
+
+% normalizacja wektora cech
+% outlier removal
+% missing data
+% dimention reduction - PCA, FDR
+% licznoœæ zbiorów
+% crossvalidation, generalization
+% sprawdzenie w³aœciwoœci dyskryminacyjnych cech
+
+
+%% Mix kolejnoœci danych
 r = randperm(size(classifyData,1));
 classifyData = classifyData(r,:);
 
