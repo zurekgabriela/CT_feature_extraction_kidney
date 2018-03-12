@@ -38,21 +38,6 @@ clear featureStruct; clear i;
 %% Feature selection
 
 % normalizacja wektora cech
-% samples(:,5:end) = samples(:,5:end)/norm(samples(:,5:end));
-% samples(:,5:end) = zscore(samples(:,5:end));
-
-features = samples(:,5:end);
-[N, k] = size(features);
-m = mean(features);
-sd = std(features);
-for i = 1 : N
-    i
-    for j = 1 : k
-        features(i, j) = (features(i, j) - m(j))/std(j);
-    end
-end
-
-
 % outlier removal
 % missing data
 % dimention reduction - PCA, FDR

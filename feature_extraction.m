@@ -183,7 +183,7 @@ for i = 1:length(CT)
 end
 
 %% Zapisanie danych
-% do folderu samples
+
 for i = 1:length(CT)
     fname = sprintf('samples_%s', CT(i).patient);
     % vname = genvarname(sprintf('samples_%s', CT(i).patient));
