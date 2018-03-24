@@ -24,7 +24,7 @@ for i = 1:length(list);
     end
 end
 
-clear i; clear list; clear myFolder; clear tempStruct; clear iter;
+clear i list myFolder tempStruct iter;
 
 %% Feature processing
 
@@ -54,17 +54,16 @@ for k = 5 : size(samples, 2)
     samples(idx,:) = [];
 end
 
-clearvar cidx idx k nanrows r i featureStruct;
+clear cidx idx k nanrows r i featureStruct;
 
 %% Do klasyfikacji bierzemy np co 20 próbkê, aby zmniejszyæ z³o¿onoœæ obliczeniow¹
-ind = [1 : 75 : size(samples)];
-trainingData = samples(ind, :);
-
-clear ind;
+ind = [1 : 50 : size(samples)];
+samples = samples(ind, :);
+clear ind clear;
 
 %% Feature selection
 % Convert input to table
-inputTable = array2table(trainingData, 'VariableNames', {'Row', 'Col', 'Vol', 'Class', 'norm', 'LBP_1', 'LBP_2', 'LBP_3', 'LBP_4', 'LBP_5', 'LBP_6', 'LBP_7', 'LBP_8', 'LBP_9', 'LBP_10', 'LBP_11', 'LBP_12', 'LBP_13', 'LBP_14', 'mean', 'std', 'entropy', 'skewness', 'kurtosis', 'contrast', 'correlation', 'energy', 'homogenity', 'HOG_1', 'HOG_2', 'HOG_3', 'HOG_4', 'HOG_5', 'HOG_6', 'HOG_7', 'HOG_8', 'HOG_9', 'HOG_10', 'HOG_11', 'HOG_12', 'HOG_13', 'HOG_14', 'HOG_15', 'HOG_16', 'HOG_17', 'HOG_18',...
+inputTable = array2table(samples, 'VariableNames', {'Row', 'Col', 'Vol', 'Class', 'norm', 'LBP_1', 'LBP_2', 'LBP_3', 'LBP_4', 'LBP_5', 'LBP_6', 'LBP_7', 'LBP_8', 'LBP_9', 'LBP_10', 'LBP_11', 'LBP_12', 'LBP_13', 'LBP_14', 'mean', 'std', 'entropy', 'skewness', 'kurtosis', 'contrast', 'correlation', 'energy', 'homogenity', 'HOG_1', 'HOG_2', 'HOG_3', 'HOG_4', 'HOG_5', 'HOG_6', 'HOG_7', 'HOG_8', 'HOG_9', 'HOG_10', 'HOG_11', 'HOG_12', 'HOG_13', 'HOG_14', 'HOG_15', 'HOG_16', 'HOG_17', 'HOG_18',...
     'Gabor_1', 'Gabor_2', 'Gabor_3', 'Gabor_4', 'Gabor_5', 'Gabor_6', 'Gabor_7', 'Gabor_8', 'Gabor_9', 'Gabor_10', 'Gabor_11', 'Gabor_12', 'Gabor_13', 'Gabor_14', 'Gabor_15', 'Gabor_16', 'Gabor_17', 'Gabor_18', 'Gabor_19', 'Gabor_20', 'Gabor_21', 'Gabor_22', 'Gabor_23', 'Gabor_24', 'Gabor_25', 'Gabor_26', 'Gabor_27', 'Gabor_28', 'Gabor_29', 'Gabor_30', 'Gabor_31', 'Gabor_32', 'Gabor_33', 'Gabor_34', 'Gabor_35', 'Gabor_36', 'Gabor_37', 'Gabor_38', 'Gabor_39', 'Gabor_40', 'Gabor_41', 'Gabor_42', 'Gabor_43', 'Gabor_44', 'Gabor_45', 'Gabor_46', 'Gabor_47', 'Gabor_48', 'Gabor_49', 'Gabor_50', 'Gabor_51', 'Gabor_52', 'Gabor_53', 'Gabor_54', 'Gabor_55', 'Gabor_56', ...
     'LoG_1', 'LoG_2', 'LoG_3', 'LoG_4', 'LoG_5', 'LoG_6', 'LoG_7', 'LoG_8', 'LoG_9', 'LoG_10', 'LoG_11', 'LoG_12', 'LoG_13', 'LoG_14', 'LoG_15', 'LoG_16'});
 predictorNames = {'norm', 'LBP_1', 'LBP_2', 'LBP_3', 'LBP_4', 'LBP_5', 'LBP_6', 'LBP_7', 'LBP_8', 'LBP_9', 'LBP_10', 'LBP_11', 'LBP_12', 'LBP_13', 'LBP_14', 'mean', 'std', 'entropy', 'skewness', 'kurtosis', 'contrast', 'correlation', 'energy', 'homogenity', 'HOG_1', 'HOG_2', 'HOG_3', 'HOG_4', 'HOG_5', 'HOG_6', 'HOG_7', 'HOG_8', 'HOG_9', 'HOG_10', 'HOG_11', 'HOG_12', 'HOG_13', 'HOG_14', 'HOG_15', 'HOG_16', 'HOG_17', 'HOG_18',...
@@ -74,13 +73,21 @@ predictors = inputTable(:, predictorNames);
 response = inputTable.Class;
 numericPredictors = table2array(varfun(@double, predictors));
 
-clear cSamples;
+% clear samples;
+
+%% CROSS - VALIDATION - licznoœæ zbiorów, overfitting, generalizacja
+% z wykorzystaniem walidacji krzy¿owej Kfold
+K = 5;
+indices = crossvalind('Kfold' ,response, K);
+for i = 1 : K
+    testind = (indices == i); trainind = ~testind;
+end
+clear i K indices;
 
 %% Sprawdzenie w³aœciwoœci dyskryminacyjnych cech - class separability za pomoc¹ FDR
-
 % indeksy odpowiadaj¹ce za odpowiednie klasy
-classTumor = numericPredictors(find(response == 1), :); 
-classKidney = numericPredictors(find(response == 0), :);
+classTumor = numericPredictors(find(response(trainind) == 1), :); 
+classKidney = numericPredictors(find(response(trainind) == 0), :);
 
 % Fisher discriminant ratio
 FDR = zeros(size(classKidney, 2), 1);
@@ -100,76 +107,34 @@ end
 % Cechy odpowiadaj¹ce za lepsz¹ separowalnoœæ cech s¹ na pocz¹tku
 [~, FDR_feature_rank] = sort(FDR, 'descend');
 
-clearvar meanKidney meanTumor varKidney varTumor i classTumor classKidney FDR;
+clear meanKidney meanTumor varKidney varTumor i classTumor classKidney FDR;
 
-%% Rank Features based on Bhatta Charyya criterion
-% dla porównania z FDR
-BC = response == 1;
-[BC_feature_rank, ~] = rankfeatures(numericPredictors', BC, 'CrossNorm', 'meanvar');
+numericPredictors = inputTable(:, predictorNames(FDR_feature_rank));
+numericPredictors = table2array(varfun(@double, numericPredictors));
 
-clear BC; 
-
-%% Compare features rank
-compare = [predictorNames(FDR_feature_rank)' predictorNames(BC_feature_rank)'];
-
-predictors = inputTable(:, predictorNames(FDR_feature_rank));
-response = inputTable.Class;
-numericPredictors = table2array(varfun(@double, predictors));
-% dataFDR = [response numericPredictors];
-
-clear FDR_feature_rank BC_feature_rank compare;
-
+clear FDR_feature_rank;
 %% Apply a PCA to the predictor matrix.
 % 'inf' values have to be treated as missing data for PCA.
 numericPredictors(isinf(numericPredictors)) = NaN;
+
+PCAtoKeep = 70;
 % obliczenie PCA
-[pcaCoefficients, pcaScores, ~, ~, explained, pcaCenters] = pca(...
-    numericPredictors, ...
+[pcaCoefficients, pcaScores] = pca(...
+    numericPredictors(trainind, :), ...
     'Centered', true);
 
-% Keep enough components to explain the desired amount of variance.
-explainedVarianceToKeepAsFraction = 95/100;
-numComponentsToKeep = find(cumsum(explained)/sum(explained) >= explainedVarianceToKeepAsFraction, 1);
-pcaCoefficients = pcaCoefficients(:,1:numComponentsToKeep);
-PCApredictors = [array2table(pcaScores(:,1:numComponentsToKeep))];
+reducedPCA = pcaCoefficients(:, 1:PCAtoKeep);
+train = numericPredictors(trainind, :)*reducedPCA;
+test = numericPredictors(testind, :)*reducedPCA;
 
-clear explained explainedVarianceToKeepAsFraction numComponentsToKeep pcaCoefficients inputTable pcaCenters pcaScores predictorNames;
-
-%% FDR - dimention reduction
-% redukcja wymiarowoœci wektora cech z wykorzystaniem scatter matrix
-% compute the Scatter Matrices
-[Sw, Sb, ~] = scatterMatrices(numericPredictors, response);
-
-[W, LAMBDA] = eig(Sb,Sw);
-lambda = diag(LAMBDA);
-[~, SortOrder] = sort(lambda,'descend');
-W = W(:,SortOrder);
-numericPredictors = numericPredictors*W;
-
-clear W LAMBDA lambda Sw Sb SortOrder;
-
-%% CROSS - VALIDATION - licznoœæ zbiorów, overfitting, generalizacja
-% z wykorzystaniem walidacji krzy¿owej Kfold
-K = 5;
-indices = crossvalind('Kfold' ,response, K);
-for i = 1 : K
-    testind = (indices == i); trainind = ~testind;
-end
-
-test = numericPredictors(find(testind == 1), :);
-test_response = response(find(testind == 1));
-train = numericPredictors(find(trainind == 1), :);
-train_response = response(find(trainind == 1));
-
-clear Train i count_test count_train test_size K trainind testind; 
+clear pcaCoefficients pcaScores reducedPCA PCAtoKeep;
 
 %% SVM
-
 % Train a training set - cubic SVM
 tic
 classificationSVM = fitcsvm(...
     train, ...
-    train_response, ...
+    response(trainind), ...
     'KernelFunction', 'polynomial', ...
     'PolynomialOrder', 3, ...
     'KernelScale', 'auto', ...
@@ -187,14 +152,15 @@ toc
 % pierwsza kolumna to wynik klasyfikacji, druga kolumna to rzeczywista
 % klasa: nerka = 0, guz = 1
 
-SVMclass(:,2) = single(test_response);
+SVMclass(:,2) = single(response(testind));
 x = 0;
 for i = 1:size(SVMclass,1)
     if SVMclass(i,1) == SVMclass(i,2)
         x = x + 1;
     end
 end
-validation_accuracy.ALL = x/size(SVMclass,1)*100;
+
+acc = x/size(SVMclass,1)*100;
 clear i; clear x;
 
 %%

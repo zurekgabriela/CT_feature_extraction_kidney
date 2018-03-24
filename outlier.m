@@ -27,7 +27,7 @@ function [index] = outlier(y, alpha, k)
 
 % Vectorize data
 y = y(:);
-n = length( y ); % Looks like boobs.
+n = length(y); 
 
 % Set up Defaults
 if(~exist('alpha', 'var'))
@@ -39,7 +39,7 @@ if(~exist('k', 'var'))
 end
 
 % sort deviations from the mean
-ybar = mean( y );
+ybar = mean(y);
 [ ys, is ] = sort( abs( y - ybar ));
 
 % Statistics for up to k outliers.
