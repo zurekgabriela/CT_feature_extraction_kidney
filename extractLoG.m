@@ -1,8 +1,6 @@
 function [ features ] = extractLoG( image, nonEmptyRow, nonEmptyCol, nonEmptyVol ) 
 
-image = (single(image));
-
-% extract Gabor magnitude features from source image. 
+image = (single(image)); 
 nonEmptyVolsingle = nonEmptyVol(diff([0 nonEmptyVol'])~=0);
 nonEmptyVolfirst = nonEmptyVol(1);
 features = [];
@@ -20,13 +18,15 @@ for vol = nonEmptyVolsingle(1) : nonEmptyVolsingle(end)
     hsize = size(image,1);
     LoGArray = zeros(size(image,1), size(image,2), size(width, 2));
     for i = 1 : size(width, 2)
+        % Filtrowanie obrazu w zale¿noœci od orientacji i szerokoœci
         filter = fspecial('log', hsize, width(i));
         LoG = imfilter(image(:,:,vol),filter);
         LoGArray(:,:,i) = LoG;
     end
         
     %% obliczenie statystyk z ka¿dego przefiltrowanego przekroju w
-    % zale¿noœci od filtra -> 16 features
+    % zale¿noœci od filtra -> 16 features - œrednia, odchylenie, asymetria,
+    % rozproszenie
     tic
     LoGStats = cell(size(image, 1), size(image, 2));
     for row = (1 + radius) : (size(image, 1) - radius)

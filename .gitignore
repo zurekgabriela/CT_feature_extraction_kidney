@@ -1,5 +1,10 @@
 
-*.vtk
-*.raw
 *.mhd
-samples/*.*
+*.raw
+Data/AT47_1/Untitled.txt
+*.vtk
+*.asv
+*.mat
+samples/samples_AT47_1.mat
+samples/samples_AT47_1.mat
+samples/samples_AT47_1.mat

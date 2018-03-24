@@ -1,21 +1,22 @@
 function [ stats ] = extractStats( image, class, radius ) 
-% obliczamy dane statystyczne dla vokseli 3x3x3 lub 5x5x5 -> radius = 1 lub
-% radius = 2
+% obliczamy dane statystyczne dla wokseli w ramce o wymiarze (radius x 2 + 1)
+% radius = 1 -> ramka jest szeœcianem o wymiarach 3 x 3 x 3
 
 %% Pobranie wymiarów obrazu. 
 [x, y, z] = size(image);
 
-%% Obliczenie œredniej dla wokseli 
+%% Inicjalizacja komórki, do której bêdzie pobierany wektor z danymi statystycznymi
 stats = cell(size(image));
 
 for row = (radius + 1) : (x - radius)
     row
 	for col = (radius + 1) : (y - radius)
         for vol = (radius + 1) : (z - radius)
-            % sprawdzenie, czy piksel nie nalezy do t³a
+            
+            % sprawdzenie, czy badany woksel nie nale¿y do t³a
             if class(row,col,vol) > 0     
                 
-                centerPixel = image(row, col, vol);
+                % pobranie ramki z obrazu dla kolejnych indeksów
                 block = image( row-radius:row+radius, col-radius:col+radius, vol-radius:vol+radius );
                 
                 % Œrednia

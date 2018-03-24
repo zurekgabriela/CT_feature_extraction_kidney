@@ -1,5 +1,5 @@
 function [ features ] = extractGaborFilter( image, nonEmptyRow, nonEmptyCol, nonEmptyVol ) 
-%%
+%% 
 image = (single(image));
 
 nonEmptyVolsingle = nonEmptyVol(diff([0 nonEmptyVol'])~=0);

@@ -36,6 +36,7 @@ for row = (1 + radius) : (size(image, 1) - radius)
 %                 cubic_gy = gy(row-radius:row+radius, col-radius:col+radius, vol-radius:vol+radius);
 %                 cubic_gz = gz(row-radius:row+radius, col-radius:col+radius, vol-radius:vol+radius);
 
+                % Dla ka¿dego szeœcianu obliczana jest wartoœæ gradientu
                 [cubic_gx, cubic_gy, cubic_gz] = gradient(CubicImage);
                 CubicGradientNorm = sqrt(cubic_gx.^2 + cubic_gy.^2 + cubic_gz.^2);
                 
@@ -58,7 +59,7 @@ for row = (1 + radius) : (size(image, 1) - radius)
                     for c = 1:size(CubicImage, 2)
                         for v = 1:size(CubicImage, 3)
                             
-                            % sprawdzamy, czy któreœ z gradientów nie s¹ równe 0
+                            % sprawdzamy, czy gradienty nie s¹ równe 0
                             if cubic_gx(r, c, v) ~= 0 || cubic_gy(r, c, v) ~= 0 || cubic_gz(r, c, v) ~= 0
                                 % Obliczamy arccosinus i arctangens w
                                 % radianach i dzielimy przez liczbê
@@ -140,7 +141,6 @@ for row = (1 + radius) : (size(image, 1) - radius)
                 
                 % Tworzenie histogramów dla obu k¹tów, zapisywanych w
                 % osobnych cellach
-                
                 HOGimage{row, col, vol} = [histogram_acos histogram_atan];
                
             end
