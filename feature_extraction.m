@@ -174,12 +174,9 @@ end
 % do folderu samples
 for i = 1:length(CT)
     fname = sprintf('samples_%s', CT(i).patient);
-<<<<<<< HEAD
     % vname = genvarname(sprintf('samples_%s', CT(i).patient));
     vname = 'features';
-=======
     vname = genvarname(sprintf('samples_%s', CT(i).patient));
->>>>>>> parent of 42f589f... 0.8
     eval([vname '= CT(i).samples;']);
     save(strcat('samples\', fname), vname);
 end

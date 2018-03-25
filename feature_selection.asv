@@ -39,22 +39,30 @@ r = randperm(size(samples,1));
 samples = samples(r,:);
 
 % Missing data
+samples(isinf(samples)) = NaN; % Inf is treated as missing data
 [nanrows, ~, ~] = find(isnan(samples));
 samples(nanrows, :) = [];
 
 % Normalizacja wektora cech - normalizujemy dane powy¿ej kolumny 4 oznaczaj¹cej klasê
 cidx = 0;
 for k = 5 : size(samples, 2)
+    k
     % samples(:,k) = zscore(samples(:,k));
     samples(:,k) = samples(:,k)/norm(samples(:,k));
     
     % Outlier removal
-    idx = outlier(samples(:, k), 2, 2);
-    cidx = cidx + length(idx);
-    samples(idx,:) = [];
+    % data = the variable name of your array
+    stdDev = std(samples(:, k)); % Compute standard deviation
+    meanValue = mean(samples(:, k)); % Compute mean
+    zFactor = 7; % or whatever you want.
+    % Create a binary map of where outliers live.
+    outliers = abs(samples(:, k)-meanValue) > (zFactor * stdDev);
+    samples(find(outliers == 1), :) = [];
+    % idx = outlier(samples(:, k), 2, 2);
+    cidx = cidx + sum(outliers);
 end
 
-clear cidx idx k nanrows r i featureStruct;
+% clear cidx idx k nanrows r i featureStruct;
 
 %% Do klasyfikacji bierzemy np co 20 próbkê, aby zmniejszyæ z³o¿onoœæ obliczeniow¹
 ind = [1 : 75 : size(samples)];
@@ -67,8 +75,9 @@ inputTable = array2table(samples, 'VariableNames', {'Row', 'Col', 'Vol', 'Class'
     'Gabor_1', 'Gabor_2', 'Gabor_3', 'Gabor_4', 'Gabor_5', 'Gabor_6', 'Gabor_7', 'Gabor_8', 'Gabor_9', 'Gabor_10', 'Gabor_11', 'Gabor_12', 'Gabor_13', 'Gabor_14', 'Gabor_15', 'Gabor_16', 'Gabor_17', 'Gabor_18', 'Gabor_19', 'Gabor_20', 'Gabor_21', 'Gabor_22', 'Gabor_23', 'Gabor_24', 'Gabor_25', 'Gabor_26', 'Gabor_27', 'Gabor_28', 'Gabor_29', 'Gabor_30', 'Gabor_31', 'Gabor_32', 'Gabor_33', 'Gabor_34', 'Gabor_35', 'Gabor_36', 'Gabor_37', 'Gabor_38', 'Gabor_39', 'Gabor_40', 'Gabor_41', 'Gabor_42', 'Gabor_43', 'Gabor_44', 'Gabor_45', 'Gabor_46', 'Gabor_47', 'Gabor_48', 'Gabor_49', 'Gabor_50', 'Gabor_51', 'Gabor_52', 'Gabor_53', 'Gabor_54', 'Gabor_55', 'Gabor_56', ...
     'LoG_1', 'LoG_2', 'LoG_3', 'LoG_4', 'LoG_5', 'LoG_6', 'LoG_7', 'LoG_8', 'LoG_9', 'LoG_10', 'LoG_11', 'LoG_12', 'LoG_13', 'LoG_14', 'LoG_15', 'LoG_16'});
 predictorNames = {'norm', 'LBP_1', 'LBP_2', 'LBP_3', 'LBP_4', 'LBP_5', 'LBP_6', 'LBP_7', 'LBP_8', 'LBP_9', 'LBP_10', 'LBP_11', 'LBP_12', 'LBP_13', 'LBP_14', 'mean', 'std', 'entropy', 'skewness', 'kurtosis', 'contrast', 'correlation', 'energy', 'homogenity', 'HOG_1', 'HOG_2', 'HOG_3', 'HOG_4', 'HOG_5', 'HOG_6', 'HOG_7', 'HOG_8', 'HOG_9', 'HOG_10', 'HOG_11', 'HOG_12', 'HOG_13', 'HOG_14', 'HOG_15', 'HOG_16', 'HOG_17', 'HOG_18',...
-   'Gabor_1', 'Gabor_2', 'Gabor_3', 'Gabor_4', 'Gabor_5', 'Gabor_6', 'Gabor_7', 'Gabor_8', 'Gabor_9', 'Gabor_10', 'Gabor_11', 'Gabor_12', 'Gabor_13', 'Gabor_14', 'Gabor_15', 'Gabor_16', 'Gabor_17', 'Gabor_18', 'Gabor_19', 'Gabor_20', 'Gabor_21', 'Gabor_22', 'Gabor_23', 'Gabor_24', 'Gabor_25', 'Gabor_26', 'Gabor_27', 'Gabor_28', 'Gabor_29', 'Gabor_30', 'Gabor_31', 'Gabor_32', 'Gabor_33', 'Gabor_34', 'Gabor_35', 'Gabor_36', 'Gabor_37', 'Gabor_38', 'Gabor_39', 'Gabor_40', 'Gabor_41', 'Gabor_42', 'Gabor_43', 'Gabor_44', 'Gabor_45', 'Gabor_46', 'Gabor_47', 'Gabor_48', 'Gabor_49', 'Gabor_50', 'Gabor_51', 'Gabor_52', 'Gabor_53', 'Gabor_54', 'Gabor_55', 'Gabor_56', ...
-   'LoG_1', 'LoG_2', 'LoG_3', 'LoG_4', 'LoG_5', 'LoG_6', 'LoG_7', 'LoG_8', 'LoG_9', 'LoG_10', 'LoG_11', 'LoG_12', 'LoG_13', 'LoG_14', 'LoG_15', 'LoG_16'};
+    'Gabor_1', 'Gabor_2', 'Gabor_3', 'Gabor_4', 'Gabor_5', 'Gabor_6', 'Gabor_7', 'Gabor_8', 'Gabor_9', 'Gabor_10', 'Gabor_11', 'Gabor_12', 'Gabor_13', 'Gabor_14', 'Gabor_15', 'Gabor_16', 'Gabor_17', 'Gabor_18', 'Gabor_19', 'Gabor_20', 'Gabor_21', 'Gabor_22', 'Gabor_23', 'Gabor_24', 'Gabor_25', 'Gabor_26', 'Gabor_27', 'Gabor_28', 'Gabor_29', 'Gabor_30', 'Gabor_31', 'Gabor_32', 'Gabor_33', 'Gabor_34', 'Gabor_35', 'Gabor_36', 'Gabor_37', 'Gabor_38', 'Gabor_39', 'Gabor_40', 'Gabor_41', 'Gabor_42', 'Gabor_43', 'Gabor_44', 'Gabor_45', 'Gabor_46', 'Gabor_47', 'Gabor_48', 'Gabor_49', 'Gabor_50', 'Gabor_51', 'Gabor_52', 'Gabor_53', 'Gabor_54', 'Gabor_55', 'Gabor_56', ...
+    'LoG_1', 'LoG_2', 'LoG_3', 'LoG_4', 'LoG_5', 'LoG_6', 'LoG_7', 'LoG_8', 'LoG_9', 'LoG_10', 'LoG_11', 'LoG_12', 'LoG_13', 'LoG_14', 'LoG_15', 'LoG_16'};
+% predictorNames = {'LoG_1', 'LoG_2', 'LoG_3', 'LoG_4', 'LoG_5', 'LoG_6', 'LoG_7', 'LoG_8', 'LoG_9', 'LoG_10', 'LoG_11', 'LoG_12', 'LoG_13', 'LoG_14', 'LoG_15', 'LoG_16'};
 predictors = inputTable(:, predictorNames);
 response = inputTable.Class;
 numericPredictors = table2array(varfun(@double, predictors));
@@ -109,15 +118,21 @@ end
 
 clear meanKidney meanTumor varKidney varTumor i classTumor classKidney FDR;
 
+features = predictorNames(FDR_feature_rank);
 numericPredictors = inputTable(:, predictorNames(FDR_feature_rank));
 numericPredictors = table2array(varfun(@double, numericPredictors));
 
+% features to keep
+FtoKeep = 70;
+numericPredictors = numericPredictors(:, 1 : FtoKeep);
+train = numericPredictors(trainind, :);
+test = numericPredictors(testind, :);
+features = features(1 : FtoKeep);
+
 clear FDR_feature_rank;
 %% Apply a PCA to the predictor matrix.
-% 'inf' values have to be treated as missing data for PCA.
-numericPredictors(isinf(numericPredictors)) = NaN;
 
-PCAtoKeep = 70;
+PCAtoKeep = 20;
 % obliczenie PCA
 [pcaCoefficients, pcaScores] = pca(...
     numericPredictors(trainind, :), ...
@@ -128,22 +143,6 @@ train = numericPredictors(trainind, :)*reducedPCA;
 test = numericPredictors(testind, :)*reducedPCA;
 
 clear pcaCoefficients pcaScores reducedPCA PCAtoKeep;
-
-%% FDR - dimention reduction % redukcja wymiarowoœci wektora cech z
-% wykorzystaniem scatter matrix 
-% compute the Scatter Matrices 
-[Sw, Sb, ~] = scatterMatrices(numericPredictors(trainind, :), response(trainind));
-
-FDRtoKeep = 70;
-[W, LAMBDA] = eig(Sb,Sw); 
-lambda = diag(LAMBDA); 
-[~, SortOrder] = sort(lambda,'descend'); 
-W = W(:,SortOrder); 
-W = W(:, 1:FDRtoKeep);
-numericPredictors(trainind, :) = numericPredictors(trainind, 1:FDRtoKeep)*W;
-numericPredictors(testind, :) = numericPredictors(testind, 1:FDRtoKeep)*W;
-
-clear W LAMBDA lambda Sw Sb SortOrder;
 
 %% SVM
 % Train a training set - cubic SVM
@@ -176,7 +175,7 @@ for i = 1:size(SVMclass,1)
     end
 end
 
-acc = x/size(SVMclass,1)*100;
+acc.SVM = x/size(SVMclass,1)*100;
 clear i; clear x;
 
 %%
