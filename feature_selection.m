@@ -51,18 +51,25 @@ for k = 5 : size(samples, 2)
     samples(:,k) = samples(:,k)/norm(samples(:,k));
     
     % Outlier removal
-    % data = the variable name of your array
-    stdDev = std(samples(:, k)); % Compute standard deviation
-    meanValue = mean(samples(:, k)); % Compute mean
-    zFactor = 10; % or whatever you want.
-    % Create a binary map of where outliers live.
-    outliers = abs(samples(:, k) - meanValue) > (zFactor * stdDev);
+%     % data = the variable name of your array
+%     stdDev = std(samples(:, k)); % Compute standard deviation
+%     meanValue = mean(samples(:, k)); % Compute mean
+%     zFactor = 10; % or whatever you want.
+%     % Create a binary map of where outliers live.
+%     outliers = abs(samples(:, k) - meanValue) > (zFactor * stdDev);
+%     samples(find(outliers == 1), :) = [];
+    
+    % Median Absolute Deviation
+    threshold = 10;
+    medianValue = median(samples(:, k));
+    MAD = median(abs(samples(:, k) - medianValue));
+    outliers = 0.6745*(samples(:, k) - medianValue)/MAD > threshold;
     samples(find(outliers == 1), :) = [];
 
     sumOut = sumOut + sum(outliers);
 end
 
-clear k nanrows r i featureStruct stdDev meanValue zFactor outliers;
+% clear k nanrows r i featureStruct stdDev meanValue zFactor outliers;
 
 %% Do klasyfikacji bierzemy np co 20 próbkê, aby zmniejszyæ z³o¿onoœæ obliczeniow¹
 ind = [1 : 75 : size(samples)];
@@ -178,44 +185,8 @@ end
 acc = x/size(SVMclass,1)*100;
 clear i; clear x;
 
-%%
-% %% Weryfikacja ró¿nic w obliczonych Features pomiêdzy guzem a nerk¹
-% 
-% verifyFeatures = struct('structure', [], 'LBPdata', [], 'bin_proc',[] , 'LBP', [], 'Z_norm', [], 'mean', [], 'std', []);
-% verifyFeatures(1).structure = 'tumor';
-% verifyFeatures(2).structure = 'kidney';
-% 
-% tumorData = zeros(size(classifyData));
-% kidneyData = zeros(size(classifyData));
-% count_t = 1;
-% count_k = 1;
-% 
-% for i = 1:size(classifyData,1)
-%     if classifyData(i,1) == 1
-%         tumorData(count_t,:) = classifyData(i,:);
-%         count_t = count_t + 1;
-%     else
-%         kidneyData(count_k,:) = classifyData(i,:);
-%         count_k = count_k + 1;
-%     end
-% end
-% 
-% tumorData = tumorData(1:count_t,:);
-% kidneyData = kidneyData(1:count_k,:);
-% clear i, clear count_t, clear count_k;
-% 
-% % % histogramy feature dla raka i nerki
-% figure
-% subplot(2,1,1)
-% histogram(tumorData(:,2))
-% title('tumor')
-% subplot(2,1,2)
-% histogram(kidneyData(:,2))
-% title('kidney')
-% % % mo¿na odj¹æ histogramy, ¿eby zobaczyæ ró¿nice
-% 
-% clear kidneyData; clear tumorData;
-% %% Wizualizacja otrzymanych wyników
+
+%% Wizualizacja otrzymanych wyników
 % 
 % train = [train train(:,5)];
 % test = [test SVMclass];
@@ -249,7 +220,7 @@ clear i; clear x;
 % end
 % 
 % 
-% %% OCENA WYNIKÓW KLASYFIKACJI
+%% OCENA WYNIKÓW KLASYFIKACJI
 % %%----KRZYWE roc, TABELE PORÓWNAWCZE 
 % 
 % % Wizualizacja Filtrów Gabora

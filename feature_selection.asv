@@ -44,25 +44,31 @@ samples(isinf(samples)) = NaN; % Inf is treated as missing data
 samples(nanrows, :) = [];
 
 % Normalizacja wektora cech - normalizujemy dane powy¿ej kolumny 4 oznaczaj¹cej klasê
-cidx = 0;
+sumOut = 0;
 for k = 5 : size(samples, 2)
     k
     % samples(:,k) = zscore(samples(:,k));
     samples(:,k) = samples(:,k)/norm(samples(:,k));
     
     % Outlier removal
-    % data = the variable name of your array
-    stdDev = std(samples(:, k)); % Compute standard deviation
-    meanValue = mean(samples(:, k)); % Compute mean
-    zFactor = 7; % or whatever you want.
-    % Create a binary map of where outliers live.
-    outliers = abs(samples(:, k)-meanValue) > (zFactor * stdDev);
+%     % data = the variable name of your array
+%     stdDev = std(samples(:, k)); % Compute standard deviation
+%     meanValue = mean(samples(:, k)); % Compute mean
+%     zFactor = 10; % or whatever you want.
+%     % Create a binary map of where outliers live.
+%     outliers = abs(samples(:, k) - meanValue) > (zFactor * stdDev);
+%     samples(find(outliers == 1), :) = [];
+    
+    threshold = 5;
+    medianValue = median(samples(:, k));
+    MAD = median(abs(samples(:, k) - medianValue));
+    outliers = 0.6745*(samples(:, k) - medianValue)/MAD > threshold;
     samples(find(outliers == 1), :) = [];
-    % idx = outlier(samples(:, k), 2, 2);
-    cidx = cidx + sum(outliers);
+
+    sumOut = sumOut + sum(outliers);
 end
 
-% clear cidx idx k nanrows r i featureStruct;
+% clear k nanrows r i featureStruct stdDev meanValue zFactor outliers;
 
 %% Do klasyfikacji bierzemy np co 20 próbkê, aby zmniejszyæ z³o¿onoœæ obliczeniow¹
 ind = [1 : 75 : size(samples)];
@@ -132,7 +138,7 @@ features = features(1 : FtoKeep);
 clear FDR_feature_rank;
 %% Apply a PCA to the predictor matrix.
 
-PCAtoKeep = 20;
+PCAtoKeep = 70;
 % obliczenie PCA
 [pcaCoefficients, pcaScores] = pca(...
     numericPredictors(trainind, :), ...
@@ -175,7 +181,7 @@ for i = 1:size(SVMclass,1)
     end
 end
 
-acc.SVM = x/size(SVMclass,1)*100;
+acc = x/size(SVMclass,1)*100;
 clear i; clear x;
 
 %%
