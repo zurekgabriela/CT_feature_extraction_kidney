@@ -34,6 +34,10 @@ for i = 1:length(featureStruct)
     samples = [samples; featureStruct(i).features];
 end
 
+% testsamples = []; % obraz spoza zbioru treningowego
+% for i = 2
+%     testsamples = [testsamples; featureStruct(i).features];
+% end
 % Mix kolejnoœci danych
 r = randperm(size(samples,1));
 samples = samples(r,:);
@@ -49,6 +53,7 @@ for k = 5 : size(samples, 2)
     k
     % samples(:,k) = zscore(samples(:,k));
     samples(:,k) = samples(:,k)/norm(samples(:,k));
+    % testsamples(:,k) = testsamples(:,k)/norm(testsamples(:,k));
     
     % Outlier removal
 %     % data = the variable name of your array
@@ -69,7 +74,7 @@ for k = 5 : size(samples, 2)
     sumOut = sumOut + sum(outliers);
 end
 
-% clear k nanrows r i featureStruct stdDev meanValue zFactor outliers;
+clear k nanrows r i featureStruct threshold medianValue MAD outliers;
 
 %% Do klasyfikacji bierzemy np co 20 próbkê, aby zmniejszyæ z³o¿onoœæ obliczeniow¹
 ind = [1 : 75 : size(samples)];
@@ -100,6 +105,8 @@ for i = 1 : K
 end
 clear i K indices;
 
+train = numericPredictors(trainind, :);
+test = numericPredictors(testind, :);
 %% Sprawdzenie w³aœciwoœci dyskryminacyjnych cech - class separability za pomoc¹ FDR
 % indeksy odpowiadaj¹ce za odpowiednie klasy
 classTumor = numericPredictors(find(response(trainind) == 1), :); 
@@ -166,26 +173,29 @@ classificationSVM = fitcsvm(...
 toc
 
 %% Classify a testing set
-tic
-SVMclass = predict(classificationSVM, test);
-toc
+
+% test = testsamples(:, 5:end); % testowanie obrazu, który jest spoza
+% zbioru treningowego
+% SVMclass(:,1) = single(test_response);
+
+SVMclass(:,1) = single(response(testind));
+SVMclass(:, 2) = predict(classificationSVM, test);
 
 % Verify classifier
-% pierwsza kolumna to wynik klasyfikacji, druga kolumna to rzeczywista
-% klasa: nerka = 0, guz = 1
+% pierwsza kolumna to rzeczywista klasa: nerka = 0, guz = 1, druga kolumna
+% to wynik klasyfikacji
 
-SVMclass(:,2) = single(response(testind));
-x = 0;
-for i = 1:size(SVMclass,1)
-    if SVMclass(i,1) == SVMclass(i,2)
-        x = x + 1;
-    end
-end
+CP = classperf(SVMclass(:,1)', SVMclass(:,2)');
+disp(CP.ErrorRate)
+disp(CP.CorrectRate)
 
-acc = x/size(SVMclass,1)*100;
+CM = figure();
+plotconfusion(SVMclass(:,1)', SVMclass(:,2)')
+
+ROC = figure();
+plotroc(SVMclass(:,1)', SVMclass(:,2)')
+
 clear i; clear x;
-
-
 %% Wizualizacja otrzymanych wyników
 % 
 % train = [train train(:,5)];

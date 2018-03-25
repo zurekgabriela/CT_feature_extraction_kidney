@@ -34,6 +34,10 @@ for i = 1:length(featureStruct)
     samples = [samples; featureStruct(i).features];
 end
 
+% testsamples = []; % obraz spoza zbioru treningowego
+% for i = 2
+%     testsamples = [testsamples; featureStruct(i).features];
+% end
 % Mix kolejnoœci danych
 r = randperm(size(samples,1));
 samples = samples(r,:);
@@ -49,6 +53,7 @@ for k = 5 : size(samples, 2)
     k
     % samples(:,k) = zscore(samples(:,k));
     samples(:,k) = samples(:,k)/norm(samples(:,k));
+    % testsamples(:,k) = testsamples(:,k)/norm(testsamples(:,k));
     
     % Outlier removal
 %     % data = the variable name of your array
@@ -59,7 +64,8 @@ for k = 5 : size(samples, 2)
 %     outliers = abs(samples(:, k) - meanValue) > (zFactor * stdDev);
 %     samples(find(outliers == 1), :) = [];
     
-    threshold = 5;
+    % Median Absolute Deviation
+    threshold = 10;
     medianValue = median(samples(:, k));
     MAD = median(abs(samples(:, k) - medianValue));
     outliers = 0.6745*(samples(:, k) - medianValue)/MAD > threshold;
@@ -68,7 +74,7 @@ for k = 5 : size(samples, 2)
     sumOut = sumOut + sum(outliers);
 end
 
-% clear k nanrows r i featureStruct stdDev meanValue zFactor outliers;
+clear k nanrows r i featureStruct threshold medianValue MAD outliers;
 
 %% Do klasyfikacji bierzemy np co 20 próbkê, aby zmniejszyæ z³o¿onoœæ obliczeniow¹
 ind = [1 : 75 : size(samples)];
@@ -99,6 +105,8 @@ for i = 1 : K
 end
 clear i K indices;
 
+train = numericPredictors(trainind, :);
+test = numericPredictors(testind, :);
 %% Sprawdzenie w³aœciwoœci dyskryminacyjnych cech - class separability za pomoc¹ FDR
 % indeksy odpowiadaj¹ce za odpowiednie klasy
 classTumor = numericPredictors(find(response(trainind) == 1), :); 
@@ -165,63 +173,28 @@ classificationSVM = fitcsvm(...
 toc
 
 %% Classify a testing set
-tic
-SVMclass = predict(classificationSVM, test);
-toc
+
+% test = testsamples(:, 5:end); % testowanie obrazu, który jest spoza
+% zbioru treningowego
+% SVMclass(:,1) = single(test_response);
+
+SVMclass(:,1) = single(response(testind));
+SVMclass(:, 2) = predict(classificationSVM, test);
 
 % Verify classifier
 % pierwsza kolumna to wynik klasyfikacji, druga kolumna to rzeczywista
 % klasa: nerka = 0, guz = 1
 
-SVMclass(:,2) = single(response(testind));
-x = 0;
-for i = 1:size(SVMclass,1)
-    if SVMclass(i,1) == SVMclass(i,2)
-        x = x + 1;
-    end
-end
+CP = classperf(SVMclass(:,1)',SVMclass(:,2)')
 
-acc = x/size(SVMclass,1)*100;
+CM = figure();
+plotconfusion(SVMclass(:,1)',SVMclass(:,2)')
+
+ROC = figure();
+plotroc(SVMclass(:,1)',SVMclass(:,2)')
+
 clear i; clear x;
-
-%%
-% %% Weryfikacja ró¿nic w obliczonych Features pomiêdzy guzem a nerk¹
-% 
-% verifyFeatures = struct('structure', [], 'LBPdata', [], 'bin_proc',[] , 'LBP', [], 'Z_norm', [], 'mean', [], 'std', []);
-% verifyFeatures(1).structure = 'tumor';
-% verifyFeatures(2).structure = 'kidney';
-% 
-% tumorData = zeros(size(classifyData));
-% kidneyData = zeros(size(classifyData));
-% count_t = 1;
-% count_k = 1;
-% 
-% for i = 1:size(classifyData,1)
-%     if classifyData(i,1) == 1
-%         tumorData(count_t,:) = classifyData(i,:);
-%         count_t = count_t + 1;
-%     else
-%         kidneyData(count_k,:) = classifyData(i,:);
-%         count_k = count_k + 1;
-%     end
-% end
-% 
-% tumorData = tumorData(1:count_t,:);
-% kidneyData = kidneyData(1:count_k,:);
-% clear i, clear count_t, clear count_k;
-% 
-% % % histogramy feature dla raka i nerki
-% figure
-% subplot(2,1,1)
-% histogram(tumorData(:,2))
-% title('tumor')
-% subplot(2,1,2)
-% histogram(kidneyData(:,2))
-% title('kidney')
-% % % mo¿na odj¹æ histogramy, ¿eby zobaczyæ ró¿nice
-% 
-% clear kidneyData; clear tumorData;
-% %% Wizualizacja otrzymanych wyników
+%% Wizualizacja otrzymanych wyników
 % 
 % train = [train train(:,5)];
 % test = [test SVMclass];
@@ -255,7 +228,7 @@ clear i; clear x;
 % end
 % 
 % 
-% %% OCENA WYNIKÓW KLASYFIKACJI
+%% OCENA WYNIKÓW KLASYFIKACJI
 % %%----KRZYWE roc, TABELE PORÓWNAWCZE 
 % 
 % % Wizualizacja Filtrów Gabora
