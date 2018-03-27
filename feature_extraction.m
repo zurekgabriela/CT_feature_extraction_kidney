@@ -26,7 +26,7 @@ for i = 1:length(list);
 end
 % CT = CT(3:length(list));
 % Roboczo jeden pacjent, by nie zajmowaæ zbyt du¿o pamiêci
-CT = CT(7:7);
+CT = CT(4:4);
 clear list;
 
 %% PRZEKSZTA£CENIE DANYCH
@@ -66,7 +66,7 @@ for i = 1:length(CT)
     %% Czyszczenie pamiêci
     CT(i).image = []; CT(i).mask = [];
 end
-clear i; CT = rmfield(CT, 'image', 'mask');
+clear i; CT = rmfield(CT, {'image', 'mask'});
 
 
 %% EKSTRAKCJA CECH CHARAKTERYSTYCZNYCH
@@ -182,5 +182,5 @@ for i = 1:length(CT)
 end
 
 % Czyszczenie pamiêci z niepotrzebnych danych
-clearvar fname vname i nonEmptyIdx nonEmptyRow nonEmptyCol nonEmptyVol
-CT = rmfield(CT, 'LBP', 'LBPnum', 'stats', 'HOG', 'GaborMag', 'LoG', 'GLCM', 'class', 'norm', 'patientID'); 
+clear fname vname i nonEmptyIdx nonEmptyRow nonEmptyCol nonEmptyVol
+CT = rmfield(CT, {'LBP', 'LBPnum', 'stats', 'HOG', 'GaborMag', 'LoG', 'GLCM', 'class', 'norm', 'patientID'}); 

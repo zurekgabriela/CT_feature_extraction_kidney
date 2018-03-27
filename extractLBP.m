@@ -64,6 +64,7 @@ end
 % [pixelCounts, GLs] = imhist(uint8(LBPimage));
 
 LBPhist = cell(size(image));
+LBPhist(find(cellfun(@isempty, LBPhist))) = {[0 0 0 0 0 0 0 0 0 0 0 0 0 0]};
 BinNum = 14;
 hist = zeros(1, BinNum);
 hist_size = 3;
