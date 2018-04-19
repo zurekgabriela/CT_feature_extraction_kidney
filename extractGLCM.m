@@ -7,7 +7,7 @@ function [ GLCM ] = extractGLCM( image, class, radius )
 
 %% Inicjalizacja komórki, do której bêd¹ pobierane wartoœci GLCM za pomoc¹ wartoœci NaN
 GLCM = cell(size(image));
-GLCM(find(cellfun(@isempty, GLCM))) = {[nan nan nan nan]};
+GLCM(find(cellfun(@isempty, GLCM))) = {[0 0 0 0]};
 
 for vol = (radius + 1) : (z - radius)
     vol
@@ -20,8 +20,8 @@ for vol = (radius + 1) : (z - radius)
                 centerPixel = image(row, col, vol);
                 block = image( row-radius:row+radius, col-radius:col+radius, vol );  
                 % Obliczenie GLCM dla ramki
-                GLCM = graycomatrix(block);                
-                Graycoprops = graycoprops(GLCM, {'all'});
+                GLCM_small = graycomatrix(block);                
+                Graycoprops = graycoprops(GLCM_small, {'all'});
                 
                 % Kontrast
                 Contrast = Graycoprops.Contrast;

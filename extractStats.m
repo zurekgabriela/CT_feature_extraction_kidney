@@ -9,7 +9,6 @@ function [ stats ] = extractStats( image, class, radius )
 stats = cell(size(image));
 
 for row = (radius + 1) : (x - radius)
-    row
 	for col = (radius + 1) : (y - radius)
         for vol = (radius + 1) : (z - radius)
             

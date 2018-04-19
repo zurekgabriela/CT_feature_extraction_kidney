@@ -16,6 +16,7 @@ SectionNum = 9;
 
 % Inicjalizacja danych wyjœciowych
 HOGimage = cell(size(image));
+HOGimage(find(cellfun(@isempty, HOGimage))) = {[0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]};
 
 % Przechodzimy przez ca³y du¿y obraz
 for row = (1 + radius) : (size(image, 1) - radius)

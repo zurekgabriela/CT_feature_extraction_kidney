@@ -26,7 +26,7 @@ for i = 1:length(list);
 end
 % CT = CT(3:length(list));
 % Roboczo jeden pacjent, by nie zajmowaæ zbyt du¿o pamiêci
-CT = CT(4:4);
+CT = CT(3:3);
 clear list;
 
 %% PRZEKSZTA£CENIE DANYCH
