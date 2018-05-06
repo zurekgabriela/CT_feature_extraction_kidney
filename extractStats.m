@@ -1,44 +1,62 @@
-function [ stats ] = extractStats( image, class, radius ) 
-% obliczamy dane statystyczne dla wokseli w ramce o wymiarze (radius x 2 + 1)
-% radius = 1 -> ramka jest szeœcianem o wymiarach 3 x 3 x 3
+function [ stats ] = extractStats( image, class, margin ) 
+% obliczamy dane statystyczne dla wokseli w ramce o wymiarze (margin x 2 + 1)
+% margin = 1 -> ramka jest szeœcianem o wymiarach 3 x 3 x 3, minimalny
+% margin = 0
 
-%% Pobranie wymiarów obrazu. 
-[x, y, z] = size(image);
+if ~isa(image,'numeric') || ~isa(class,'numeric') || ~isa(margin,'numeric')
+    error('extractStats:InputMustBeNumeric', ...
+        'Coefficients must be numeric.');
+end
+
+%% Pobranie wymiarów obrazu.
+
+image = cat(3, repmat(image(:,:,1), 1, 1, margin), image);
+image = cat(3, image, repmat(image(:, :, size( image, 3 )), 1, 1, margin));
+image = cat(2, repmat(image(:,1,:), 1, margin, 1), image);
+image = cat(2, image, repmat(image(:, size( image, 2 ), :), 1, margin, 1));
+image = cat(1, repmat(image(1,:,:), margin, 1, 1), image);
+image = cat(1, image, repmat(image(size( image, 1 ), :, :), margin, 1, 1));
+
+class = cat(3, repmat(class(:,:,1), 1, 1, margin), class);
+class = cat(3, class, repmat(class(:, :, size( class, 3 )), 1, 1, margin));
+class = cat(2, repmat(class(:,1,:), 1, margin, 1), class);
+class = cat(2, class, repmat(class(:, size( class, 2 ), :), 1, margin, 1));
+class = cat(1, repmat(class(1,:,:), margin, 1, 1), class);
+class = cat(1, class, repmat(class(size( class, 1 ), :, :), margin, 1, 1));
+
+nonEmptyIdx = find(~(class == 0));
+[nonEmptyRow,nonEmptyCol,nonEmptyVol] = ind2sub(size(image),nonEmptyIdx);
 
 %% Inicjalizacja komórki, do której bêdzie pobierany wektor z danymi statystycznymi
 stats = cell(size(image));
+% stats(find(cellfun(@isempty, stats))) = {[0 0 0 0 0]};
 
-for row = (radius + 1) : (x - radius)
-	for col = (radius + 1) : (y - radius)
-        for vol = (radius + 1) : (z - radius)
-            
-            % sprawdzenie, czy badany woksel nie nale¿y do t³a
-            if class(row,col,vol) > 0     
-                
-                % pobranie ramki z obrazu dla kolejnych indeksów
-                block = image( row-radius:row+radius, col-radius:col+radius, vol-radius:vol+radius );
-                
-                % Œrednia
-                Mean = mean(mean(mean(block)));
-                
-                % Odchylenie standardowe
-                StandardDev = std(std(std(block)));
-                
-                % Entropia
-                Entropy = entropy(block);
-                
-                % Asymetria
-                Skewness = skewness(skewness(skewness(block)));
-                
-                % Rozproszenie
-                Kurtosis = kurtosis(kurtosis(kurtosis(block)));        
-                               
-                % Dane statystyczne w wektorze
-                stats{row, col, vol} = [Mean StandardDev Entropy Kurtosis Skewness];              
-                
-            end
-        end
-	end  
+for i = 1 : length(nonEmptyIdx)
+    i
+    row = nonEmptyRow(i);
+    col = nonEmptyCol(i);
+    vol = nonEmptyVol(i);
+
+    % pobranie ramki z obrazu dla kolejnych indeksów
+    block = image( row-margin:row+margin, col-margin:col+margin, vol-margin:vol+margin );
+
+    % Œrednia
+    Mean = mean(mean(mean(block)));
+
+    % Odchylenie standardowe
+    StandardDev = std(std(std(block)));
+
+    % Entropia
+    Entropy = entropy(block);
+
+    % Asymetria
+    Skewness = skewness(skewness(skewness(block)));
+
+    % Rozproszenie
+    Kurtosis = kurtosis(kurtosis(kurtosis(block)));        
+
+    % Dane statystyczne w wektorze 
+    stats{row, col, vol} = [Mean StandardDev Entropy Kurtosis Skewness];    
 end 
 
 end                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             

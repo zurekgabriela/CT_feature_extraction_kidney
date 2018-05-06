@@ -26,18 +26,47 @@ end
 
 clear i list myFolder tempStruct iter;
 
+%% Analiza ró¿nic pomiêdzy guzem i nerk¹
+tumor = [];
+kidney = [];
+for i = 1 : length(featureStruct)
+    
+    featureStruct(i).kidney = zeros(4, size(featureStruct(1).features, 2));
+    featureStruct(i).tumor = zeros(4, size(featureStruct(1).features, 2));
+    
+    tumorind = find(featureStruct(i).features(:,4) == 1); 
+    kidneyind = find(featureStruct(i).features(:,4) == 0);
+
+    for k = 5 : size(featureStruct(i).features, 2)
+        featureStruct(i).tumor(1, k) = mean(featureStruct(i).features(tumorind, k));
+        featureStruct(i).tumor(2, k) = std(featureStruct(i).features(tumorind, k));
+        featureStruct(i).tumor(3, k) = min(featureStruct(i).features(tumorind, k));
+        featureStruct(i).tumor(4, k) = max(featureStruct(i).features(tumorind, k));
+        
+        featureStruct(i).kidney(1, k) = mean(featureStruct(i).features(kidneyind, k));
+        featureStruct(i).kidney(2, k) = std(featureStruct(i).features(kidneyind, k));
+        featureStruct(i).kidney(3, k) = min(featureStruct(i).features(kidneyind, k));
+        featureStruct(i).kidney(4, k) = max(featureStruct(i).features(kidneyind, k));
+    end
+    
+    tumor = [tumor; featureStruct(i).tumor];
+    kidney = [kidney; featureStruct(i).kidney];
+end
+
+clear i k tumorind kidneyind;
 %% Feature processing
 
 % Po³¹czenie danych z kilku zdjêæ
 samples = [];
-for i = 1:length(featureStruct)
+for i = 2:length(featureStruct)
     samples = [samples; featureStruct(i).features];
 end
 
-% testsamples = []; % obraz spoza zbioru treningowego
-% for i = 2
-%     testsamples = [testsamples; featureStruct(i).features];
-% end
+testsamples = []; % obraz spoza zbioru treningowego
+for i = 1
+    testsamples = [testsamples; featureStruct(i).features];
+end
+
 % Mix kolejnoœci danych
 r = randperm(size(samples,1));
 samples = samples(r,:);
@@ -51,37 +80,30 @@ samples(nanrows, :) = [];
 sumOut = 0;
 for k = 5 : size(samples, 2)
     k
-    % samples(:,k) = zscore(samples(:,k));
-    samples(:,k) = samples(:,k)/norm(samples(:,k));
-    % testsamples(:,k) = testsamples(:,k)/norm(testsamples(:,k));
+%     samples(:,k) = samples(:,k)/norm(samples(:,k));
+%     testsamples(:,k) = testsamples(:,k)/norm(testsamples(:,k));
+    
+    samples(:,k) = normalizeToRange(samples(:,k), 0, 10);
+    testsamples(:,k) = normalizeToRange(testsamples(:,k), 0, 10);
     
     % Outlier removal
-%     % data = the variable name of your array
-%     stdDev = std(samples(:, k)); % Compute standard deviation
-%     meanValue = mean(samples(:, k)); % Compute mean
-%     zFactor = 10; % or whatever you want.
-%     % Create a binary map of where outliers live.
-%     outliers = abs(samples(:, k) - meanValue) > (zFactor * stdDev);
-%     samples(find(outliers == 1), :) = [];
-    
     % Median Absolute Deviation
     threshold = 10;
     medianValue = median(samples(:, k));
     MAD = median(abs(samples(:, k) - medianValue));
     outliers = 0.6745*(samples(:, k) - medianValue)/MAD > threshold;
     samples(find(outliers == 1), :) = [];
-
     sumOut = sumOut + sum(outliers);
 end
 
 clear k nanrows r i featureStruct threshold medianValue MAD outliers;
 
-%% Do klasyfikacji bierzemy np co 20 próbkê, aby zmniejszyæ z³o¿onoœæ obliczeniow¹
-ind = [1 : 75 : size(samples)];
+% Do klasyfikacji bierzemy np co 20 próbkê, aby zmniejszyæ z³o¿onoœæ obliczeniow¹
+ind = [1 : 20 : size(samples)];
 samples = samples(ind, :);
 clear ind clear;
 
-%% Feature selection
+% Feature selection
 % Convert input to table
 inputTable = array2table(samples, 'VariableNames', {'Row', 'Col', 'Vol', 'Class', 'norm', 'LBP_1', 'LBP_2', 'LBP_3', 'LBP_4', 'LBP_5', 'LBP_6', 'LBP_7', 'LBP_8', 'LBP_9', 'LBP_10', 'LBP_11', 'LBP_12', 'LBP_13', 'LBP_14', 'mean', 'std', 'entropy', 'skewness', 'kurtosis', 'contrast', 'correlation', 'energy', 'homogenity', 'HOG_1', 'HOG_2', 'HOG_3', 'HOG_4', 'HOG_5', 'HOG_6', 'HOG_7', 'HOG_8', 'HOG_9', 'HOG_10', 'HOG_11', 'HOG_12', 'HOG_13', 'HOG_14', 'HOG_15', 'HOG_16', 'HOG_17', 'HOG_18',...
     'Gabor_1', 'Gabor_2', 'Gabor_3', 'Gabor_4', 'Gabor_5', 'Gabor_6', 'Gabor_7', 'Gabor_8', 'Gabor_9', 'Gabor_10', 'Gabor_11', 'Gabor_12', 'Gabor_13', 'Gabor_14', 'Gabor_15', 'Gabor_16', 'Gabor_17', 'Gabor_18', 'Gabor_19', 'Gabor_20', 'Gabor_21', 'Gabor_22', 'Gabor_23', 'Gabor_24', 'Gabor_25', 'Gabor_26', 'Gabor_27', 'Gabor_28', 'Gabor_29', 'Gabor_30', 'Gabor_31', 'Gabor_32', 'Gabor_33', 'Gabor_34', 'Gabor_35', 'Gabor_36', 'Gabor_37', 'Gabor_38', 'Gabor_39', 'Gabor_40', 'Gabor_41', 'Gabor_42', 'Gabor_43', 'Gabor_44', 'Gabor_45', 'Gabor_46', 'Gabor_47', 'Gabor_48', 'Gabor_49', 'Gabor_50', 'Gabor_51', 'Gabor_52', 'Gabor_53', 'Gabor_54', 'Gabor_55', 'Gabor_56', ...
@@ -94,7 +116,7 @@ predictors = inputTable(:, predictorNames);
 response = inputTable.Class;
 numericPredictors = table2array(varfun(@double, predictors));
 
-% clear samples;
+clear samples;
 
 %% CROSS - VALIDATION - licznoœæ zbiorów, overfitting, generalizacja
 % z wykorzystaniem walidacji krzy¿owej Kfold
@@ -107,6 +129,7 @@ clear i K indices;
 
 train = numericPredictors(trainind, :);
 test = numericPredictors(testind, :);
+
 %% Sprawdzenie w³aœciwoœci dyskryminacyjnych cech - class separability za pomoc¹ FDR
 % indeksy odpowiadaj¹ce za odpowiednie klasy
 classTumor = numericPredictors(find(response(trainind) == 1), :); 
@@ -137,7 +160,7 @@ numericPredictors = inputTable(:, predictorNames(FDR_feature_rank));
 numericPredictors = table2array(varfun(@double, numericPredictors));
 
 % features to keep
-FtoKeep = 70;
+FtoKeep = 114;
 numericPredictors = numericPredictors(:, 1 : FtoKeep);
 train = numericPredictors(trainind, :);
 test = numericPredictors(testind, :);
@@ -146,7 +169,7 @@ features = features(1 : FtoKeep);
 clear FDR_feature_rank;
 %% Apply a PCA to the predictor matrix.
 
-PCAtoKeep = 70;
+PCAtoKeep = 114;
 % obliczenie PCA
 [pcaCoefficients, pcaScores] = pca(...
     numericPredictors(trainind, :), ...
@@ -174,11 +197,9 @@ toc
 
 %% Classify a testing set
 
-% test = testsamples(:, 5:end); % testowanie obrazu, który jest spoza
-% zbioru treningowego
-% SVMclass(:,1) = single(test_response);
-
-SVMclass(:,1) = single(response(testind));
+test = testsamples(:, 5:end); % testowanie obrazu, który jest spoza zbioru treningowego
+SVMclass(:,1) = single(testsamples(:, 4));
+% SVMclass(:,1) = single(response(testind));
 SVMclass(:, 2) = predict(classificationSVM, test);
 
 % Verify classifier
@@ -195,7 +216,49 @@ plotconfusion(SVMclass(:,1)', SVMclass(:,2)')
 ROC = figure();
 plotroc(SVMclass(:,1)', SVMclass(:,2)')
 
+figure;
+plot(loss(classificationSVM, SVMclass(:,1)', SVMclass(:,2)', 'mode', 'cumulative'));
+
 clear i; clear x;
+
+%% RUSBoost - overfitting problem
+
+tabulate(response)
+rng(10,'twister')         % For reproducibility
+
+part = cvpartition(response, 'Holdout', 0.5);
+
+istrain = training(part); % Data for fitting
+istest = test(part);      % Data for quality assessment
+
+tabulate(response(istrain))
+
+N = sum(istrain);         % Number of observations in the training sample
+t = templateTree('MaxNumSplits', N);
+% t = templateTree('Surrogate','On');
+tic
+rusTree = fitensemble(predictors(istrain,:), response(istrain), 'RUSBoost', 100, t);
+toc
+
+figure;
+tic
+plot(loss(rusTree, predictors(istest,:), response(istest), 'mode', 'cumulative'));
+toc
+grid on;
+xlabel('Number of trees');
+ylabel('Test classification error');
+%
+tic
+% responsefit = predict(rusTree, predictors(istest,:));
+responsefit = predict(rusTree, testsamples(:, 5:end));
+toc
+
+figure;
+% plotconfusion(response(istest)', responsefit')
+plotconfusion(testsamples(:, 4)', responsefit')
+figure;
+% plotroc(response(istest)', responsefit')
+plotroc(testsamples(:, 4)', responsefit')
 %% Wizualizacja otrzymanych wyników
 % 
 % train = [train train(:,5)];
@@ -230,15 +293,3 @@ clear i; clear x;
 % end
 % 
 % 
-%% OCENA WYNIKÓW KLASYFIKACJI
-% %%----KRZYWE roc, TABELE PORÓWNAWCZE 
-% 
-% % Wizualizacja Filtrów Gabora
-% 
-% for p = 1:length(g)
-%         subplot(5,6,p);
-%         imshow(real(g(p).SpatialKernel),[]);
-%         lambda = g(p).Wavelength;
-%         theta  = g(p).Orientation;
-%         title(sprintf('Re[h(x,y)], \\lambda = %d, \\theta = %d',lambda,theta));
-% end

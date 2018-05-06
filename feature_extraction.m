@@ -33,7 +33,7 @@ clear list;
 
 for i = 1:length(CT)
     
-    %% Przekszta³cenie klas obrazów tak, by nerka by³a oznaczona wartoœci¹ 1, a guz wartoœci¹ 2
+    % Przekszta³cenie klas obrazów tak, by nerka by³a oznaczona wartoœci¹ 1, a guz wartoœci¹ 2
     % class: nerka = 1; guz = 2
     CT(i).mask = CT(i).class;    
     for a = 1:size(CT(i).class,1)
@@ -53,21 +53,21 @@ for i = 1:length(CT)
     clearvars a b c; 
     sprintf('przekszta³cono klasê %s',CT(i).patient)
    
-    %% Nak³adanie maski na obraz - wyodrêbnienie wokseli, które zawieraj¹ tylko nerkê i guz
+    % Nak³adanie maski na obraz - wyodrêbnienie wokseli, które zawieraj¹ tylko nerkê i guz
     CT(i).mask = CT(i).mask.*CT(i).image;  
     sprintf('na³o¿ono maskê na obraz %s',CT(i).patient)
 
-    %% Normalizacja typu Z
+    % Normalizacja typu Z
     nonEmptyIdx = find(~(CT(i).class==0));
     CT(i).norm = zeros(size(CT(i).mask));
     CT(i).norm(nonEmptyIdx) = zscore(CT(i).mask(nonEmptyIdx), 1);
     sprintf('znormalizowano dane %s',CT(i).patient)   
     
-    %% Czyszczenie pamiêci
+    % Czyszczenie pamiêci
     CT(i).image = []; CT(i).mask = [];
 end
-clear i; CT = rmfield(CT, {'image', 'mask'});
 
+clear i; CT = rmfield(CT, {'image', 'mask'});
 
 %% EKSTRAKCJA CECH CHARAKTERYSTYCZNYCH
 

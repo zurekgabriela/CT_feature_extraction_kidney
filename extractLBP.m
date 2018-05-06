@@ -6,6 +6,17 @@ function [ LBPhist ] = extractLBP( image, class, radius )
 %% Pobranie wymiarów obrazu. 
 [x, y, z] = size(image);
 
+%% Filtracja obrazu 
+% h = fspecial('gaussian');
+% h = fspecial('prewitt');
+for vol = 1 : z
+    % image(:, :, vol) = imfilter(image(:, :, vol), h);
+    % image(:, :, vol) = medfilt2(image(:, :, vol));
+    image(:, :, vol) = wiener2(image(:, :, vol), [2 2]);
+end
+
+% image = imgaussfilt3(image);
+
 %% Inicjalizacja obrazu LBP (bianary)
 LBPimage = cell(size(image));
 % Inicjalizacja obrazu LBP (decimal)
