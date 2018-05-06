@@ -26,7 +26,7 @@ for i = 1:length(list);
 end
 % CT = CT(3:length(list));
 % Roboczo jeden pacjent, by nie zajmowaæ zbyt du¿o pamiêci
-CT = CT(3:4);
+CT = CT(3:3);
 clear list i;
 
 %% PRZEKSZTA£CENIE DANYCH
@@ -35,16 +35,16 @@ for i = 1:length(CT)
     i
     % Przekszta³cenie klas obrazów tak, by nerka by³a oznaczona wartoœci¹ 1, a guz wartoœci¹ 2
     % class: nerka = 1; guz = 2
-    CT(i).mask = CT(i).class;    
+%     CT(i).mask = CT(i).class;    
     for a = 1:size(CT(i).class,1)
         for b = 1:size(CT(i).class,2)
             for c = 1:size(CT(i).class,3)
                 if (CT(i).class(a,b,c) == 1) || (CT(i).class(a,b,c) == 6)
                     CT(i).class(a,b,c) = 1;
-                    CT(i).mask(a,b,c) = 1;
+%                     CT(i).mask(a,b,c) = 1;
                 elseif (CT(i).class(a,b,c) == 2) || (CT(i).class(a,b,c) == 3)
                     CT(i).class(a,b,c) = 2;
-                    CT(i).mask(a,b,c) = 1;
+%                     CT(i).mask(a,b,c) = 1;
                 end
             end
         end
@@ -86,26 +86,19 @@ for i = 1:length(CT)
 
     sprintf('wyszukano indeksy i zapisano dane Row, Col, Vol, class, norm do wektora cech %s',CT(i).patient)
 
-%     for radius = 1 : 2 : 30
-        radius = 25;
+    for radius = 1 : 2 : 40
         % Feature extraction
         % Stats  - œrednia, odchylenie standardowe, wariancja, entropia,
         % asymetria, rozproszenie z ramki o wymiarach (2r + 1)
         CT(i).stats = extractStats( double(CT(i).norm), CT(i).class, radius );
         sprintf('obliczono statystyki 3D %s',CT(i).patient)
 
-        % przekszta³cenie stats z komórki do wektora
-        stats_to_write = [CT(i).stats{nonEmptyIdx}];
-        sprintf('wpisano stats %s',CT(i).patient)
-        stats_to_write = reshape(stats_to_write,[1,length(stats_to_write)/1])';
-        sprintf('przekszta³cono w tablicê %s',CT(i).patient)
-
         % zapisanie danych do wektora
-        CT(i).samples = [CT(i).samples single(stats_to_write)];
+        CT(i).samples = [CT(i).samples single(CT(i).stats)];
         sprintf('zapisano dane stats w wektorze samples %s',CT(i).patient)
 
         CT(i).stats = []; clear stats_to_write;      
-%     end
+    end
     fname = sprintf('samples_%s', CT(i).patient);
     vname = 'features';
     eval([vname '= CT(i).samples;']);
@@ -182,7 +175,7 @@ smallest_error = 1;
 % pierwsza kolumna w wektorze cech oznaczaj¹ca LBP
 first = 6;
 
-for i = 1 : 2 : 30
+for i = 1 : 2 : 40
     i
     predictors = samples(:, first : (first + feature_length - 1));
     [err, CM] = fastclassify(predictors, response);
@@ -194,7 +187,7 @@ for i = 1 : 2 : 30
         best_radius = i;
     end  
 end
-%%
+
 figure;
 plot([ERROR.radius], [ERROR.err])
 

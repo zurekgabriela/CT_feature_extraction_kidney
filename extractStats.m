@@ -1,4 +1,4 @@
-function [ stats ] = extractStats( image, class, margin ) 
+function [ stats_to_write ] = extractStats( image, class, margin ) 
 % obliczamy dane statystyczne dla wokseli w ramce o wymiarze (margin x 2 + 1)
 % margin = 1 -> ramka jest szeœcianem o wymiarach 3 x 3 x 3, minimalny
 % margin = 0
@@ -58,5 +58,9 @@ for i = 1 : length(nonEmptyIdx)
     % Dane statystyczne w wektorze 
     stats{row, col, vol} = [Mean StandardDev Entropy Kurtosis Skewness];    
 end 
+
+% przekszta³cenie stats z komórki do wektora
+stats_to_write = [stats{nonEmptyIdx}];
+stats_to_write = reshape(stats_to_write,[5,length(stats_to_write)/5])';
 
 end                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
