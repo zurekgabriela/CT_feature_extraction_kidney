@@ -24,9 +24,9 @@ for i = 1:length(list);
     end    
     clear patientPath; clear infoCT; clear dim; clear i; clear I; clear M; 
 end
-% CT = CT(3:length(list));
+CT = CT(3:length(list));
 % Roboczo jeden pacjent, by nie zajmowaæ zbyt du¿o pamiêci
-CT = CT(3:3);
+% CT = CT(3:3);
 clear list i;
 
 %% PRZEKSZTA£CENIE DANYCH
@@ -64,20 +64,20 @@ for i = 1:length(CT)
 %     sprintf('znormalizowano dane %s',CT(i).patient) 
     
     % Normalizacja typu Z
-    CT(i).norm = zeros(size(CT(i).mask));
+    CT(i).norm = zeros(size(CT(i).class));
     CT(i).norm = zscore(CT(i).image);
     sprintf('znormalizowano dane %s',CT(i).patient) 
     
     % Czyszczenie pamiêci
-    CT(i).image = []; CT(i).mask = [];  
+    CT(i).image = []; % CT(i).mask = [];  
 end
-clear i; CT = rmfield(CT, {'image', 'mask'});
+clear i; CT = rmfield(CT, {'image'});
 
 
 %% EKSTRAKCJA CECH CHARAKTERYSTYCZNYCH
 
 % zmieniamy rozmiar promienia
-for i = 1:length(CT)  
+for i = 3:length(CT)  
     % Przekszta³cenie próbek w wektor do klasyfikacji
     % znalezienie indeksów oznaczaj¹cych nerkê i guza (bez t³a)
     nonEmptyIdx = find(~(CT(i).class == 0));
@@ -87,6 +87,7 @@ for i = 1:length(CT)
     sprintf('wyszukano indeksy i zapisano dane Row, Col, Vol, class, norm do wektora cech %s',CT(i).patient)
 
     for radius = 1 : 2 : 40
+        radius
         % Feature extraction
         % Stats  - œrednia, odchylenie standardowe, wariancja, entropia,
         % asymetria, rozproszenie z ramki o wymiarach (2r + 1)
@@ -99,10 +100,12 @@ for i = 1:length(CT)
 
         CT(i).stats = []; clear stats_to_write;      
     end
+    
     fname = sprintf('samples_%s', CT(i).patient);
     vname = 'features';
     eval([vname '= CT(i).samples;']);
     save(strcat('features\', fname), vname);
+    
 end
     
 %% Load data
