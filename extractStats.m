@@ -32,6 +32,10 @@ stats = cell(size(image));
 % stats(find(cellfun(@isempty, stats))) = {[0 0 0 0 0]};
 
 for i = 1 : length(nonEmptyIdx)
+<<<<<<< HEAD
+=======
+    
+>>>>>>> origin/master
     row = nonEmptyRow(i);
     col = nonEmptyCol(i);
     vol = nonEmptyVol(i);

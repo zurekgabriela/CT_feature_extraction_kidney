@@ -24,9 +24,13 @@ for i = 1:length(list);
     end    
     clear patientPath; clear infoCT; clear dim; clear i; clear I; clear M; 
 end
+<<<<<<< HEAD
 %CT = CT(3:length(list));
+=======
+CT = CT(3:length(list));
+>>>>>>> origin/master
 % Roboczo jeden pacjent, by nie zajmowaæ zbyt du¿o pamiêci
-CT = CT(3:3);
+% CT = CT(3:3);
 clear list i;
 
 %% PRZEKSZTA£CENIE DANYCH
@@ -57,16 +61,27 @@ for i = 1:length(CT)
 %     CT(i).norm = zeros(size(CT(i).mask));
 %     CT(i).norm(nonEmptyIdx) = zscore(CT(i).mask(nonEmptyIdx), 1);
 %     sprintf('znormalizowano dane %s',CT(i).patient) 
+<<<<<<< HEAD
 
     % Normalizacja typu Z   
     [~, mu, sigma] = zscore(CT(i).image(nonEmptyIdx), 1);
     CT(i).norm = zeros(size(CT(i).image));
     CT(i).norm = (CT(i).image-mu)./sigma;
+=======
+    
+    % Normalizacja typu Z
+    CT(i).norm = zeros(size(CT(i).class));
+    CT(i).norm = zscore(CT(i).image);
+>>>>>>> origin/master
     sprintf('znormalizowano dane %s',CT(i).patient) 
     CT(i).norm = single(CT(i).norm);
      
     % Czyszczenie pamiêci
+<<<<<<< HEAD
     CT(i).image = [];  
+=======
+    CT(i).image = []; % CT(i).mask = [];  
+>>>>>>> origin/master
 end
 clear i; CT = rmfield(CT, {'image'});
 
@@ -74,7 +89,7 @@ clear i; CT = rmfield(CT, {'image'});
 %% EKSTRAKCJA CECH CHARAKTERYSTYCZNYCH
 
 % zmieniamy rozmiar promienia
-for i = 1:length(CT)  
+for i = 3:length(CT)  
     % Przekszta³cenie próbek w wektor do klasyfikacji
     % znalezienie indeksów oznaczaj¹cych nerkê i guza (bez t³a)
     nonEmptyIdx = find(~(CT(i).class == 0));
