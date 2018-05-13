@@ -24,7 +24,7 @@ for i = 1:length(list);
     end    
     clear patientPath; clear infoCT; clear dim; clear i; clear I; clear M; 
 end
-% CT = CT(3:length(list));
+%CT = CT(3:length(list));
 % Roboczo jeden pacjent, by nie zajmowaæ zbyt du¿o pamiêci
 CT = CT(3:3);
 clear list i;
@@ -33,45 +33,42 @@ clear list i;
 
 for i = 1:length(CT)
     i
+    nonEmptyIdx = find(~(CT(i).class==0));
+    [nonEmptyRow,nonEmptyCol,nonEmptyVol] = ind2sub(size(CT(i).image),nonEmptyIdx);
     % Przekszta³cenie klas obrazów tak, by nerka by³a oznaczona wartoœci¹ 1, a guz wartoœci¹ 2
-    % class: nerka = 1; guz = 2
-%     CT(i).mask = CT(i).class;    
-    for a = 1:size(CT(i).class,1)
-        for b = 1:size(CT(i).class,2)
-            for c = 1:size(CT(i).class,3)
-                if (CT(i).class(a,b,c) == 1) || (CT(i).class(a,b,c) == 6)
-                    CT(i).class(a,b,c) = 1;
-%                     CT(i).mask(a,b,c) = 1;
-                elseif (CT(i).class(a,b,c) == 2) || (CT(i).class(a,b,c) == 3)
-                    CT(i).class(a,b,c) = 2;
-%                     CT(i).mask(a,b,c) = 1;
-                end
-            end
+    % class: nerka = 1; guz = 2 
+    for j = 1 : length(nonEmptyIdx)
+        row = nonEmptyRow(j);
+        col = nonEmptyCol(j);
+        vol = nonEmptyVol(j);
+        if (CT(i).class(row, col, vol) == 1) || (CT(i).class(row, col, vol) == 6)
+            CT(i).class(row, col, vol) = 1;
+        elseif (CT(i).class(row, col, vol) == 2) || (CT(i).class(row, col, vol) == 3)
+            CT(i).class(row, col, vol) = 2;
         end
     end
+
     CT(i).class = single(CT(i).class);
-    clearvars a b c; 
+    clearvars row col vol; 
     sprintf('przekszta³cono klasê %s',CT(i).patient)
-   
-%     % Nak³adanie maski na obraz - wyodrêbnienie wokseli, które zawieraj¹ tylko nerkê i guz
-%     CT(i).mask = CT(i).mask.*CT(i).image;  
-%     sprintf('na³o¿ono maskê na obraz %s',CT(i).patient)
 
 %     % Normalizacja typu Z
 %     nonEmptyIdx = find(~(CT(i).class==0));
 %     CT(i).norm = zeros(size(CT(i).mask));
 %     CT(i).norm(nonEmptyIdx) = zscore(CT(i).mask(nonEmptyIdx), 1);
 %     sprintf('znormalizowano dane %s',CT(i).patient) 
-    
-    % Normalizacja typu Z
-    CT(i).norm = zeros(size(CT(i).mask));
-    CT(i).norm = zscore(CT(i).image);
+
+    % Normalizacja typu Z   
+    [~, mu, sigma] = zscore(CT(i).image(nonEmptyIdx), 1);
+    CT(i).norm = zeros(size(CT(i).image));
+    CT(i).norm = (CT(i).image-mu)./sigma;
     sprintf('znormalizowano dane %s',CT(i).patient) 
-    
+    CT(i).norm = single(CT(i).norm);
+     
     % Czyszczenie pamiêci
-    CT(i).image = []; CT(i).mask = [];  
+    CT(i).image = [];  
 end
-clear i; CT = rmfield(CT, {'image', 'mask'});
+clear i; CT = rmfield(CT, {'image'});
 
 
 %% EKSTRAKCJA CECH CHARAKTERYSTYCZNYCH
@@ -87,10 +84,11 @@ for i = 1:length(CT)
     sprintf('wyszukano indeksy i zapisano dane Row, Col, Vol, class, norm do wektora cech %s',CT(i).patient)
 
     for radius = 1 : 2 : 40
+        radius
         % Feature extraction
         % Stats  - œrednia, odchylenie standardowe, wariancja, entropia,
         % asymetria, rozproszenie z ramki o wymiarach (2r + 1)
-        CT(i).stats = extractStats( double(CT(i).norm), CT(i).class, radius );
+        CT(i).stats = extractStats( CT(i).norm, CT(i).class, radius );
         sprintf('obliczono statystyki 3D %s',CT(i).patient)
 
         % zapisanie danych do wektora
@@ -99,10 +97,12 @@ for i = 1:length(CT)
 
         CT(i).stats = []; clear stats_to_write;      
     end
+    
     fname = sprintf('samples_%s', CT(i).patient);
     vname = 'features';
     eval([vname '= CT(i).samples;']);
     save(strcat('features\', fname), vname);
+    
 end
     
 %% Load data

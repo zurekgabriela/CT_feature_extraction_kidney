@@ -1,6 +1,5 @@
-function [ features ] = extractGaborFilter( image, nonEmptyRow, nonEmptyCol, nonEmptyVol ) 
+function [ features ] = extractGaborFilter( image, nonEmptyRow, nonEmptyCol, nonEmptyVol, radius ) 
 %% 
-image = (single(image));
 
 nonEmptyVolsingle = nonEmptyVol(diff([0 nonEmptyVol'])~=0);
 
@@ -18,7 +17,6 @@ orientation = 0:deltaTheta:(180-deltaTheta);
 g = gabor(wavelength,orientation);
 
 % do obliczenia statystyk bierzemy bloki 3x3
-radius = 1;
 features = [];
 
 for i = 1 : size(nonEmptyVolsingle, 1);
@@ -36,10 +34,12 @@ for i = 1 : size(nonEmptyVolsingle, 1);
     tic
     for row = (1 + radius) : (size(GaborMag, 1) - radius)
         for col = (1 + radius) : (size(GaborMag, 2) - radius)
-            stats_vec = zeros(1, size(g,2)*2);
+            stats_vec = zeros(1, size(g,2)*4);
             for i = 1 : size(g,2) 
-                stats_vec(1,i*2-1) =  mean(mean(GaborMag( row-radius:row+radius, col-radius:col+radius, i )));
-                stats_vec(1,i*2) = std(std(GaborMag( row-radius:row+radius, col-radius:col+radius, i )));
+                stats_vec(1,i*4-3) =  mean(mean(GaborMag( row-radius:row+radius, col-radius:col+radius, i )));
+                stats_vec(1,i*4-2) = std(std(GaborMag( row-radius:row+radius, col-radius:col+radius, i )));
+                stats_vec(1,i*4-1) = skewness(skewness(GaborMag( row-radius:row+radius, col-radius:col+radius, i )));
+                stats_vec(1,i*4) = kurtosis(kurtosis(GaborMag( row-radius:row+radius, col-radius:col+radius, i )));
             end
             GaborMagStats{row, col} = stats_vec;
         end
@@ -48,7 +48,7 @@ for i = 1 : size(nonEmptyVolsingle, 1);
             
     linearVol = sub2ind([ size(GaborMag,1), size(GaborMag,2)], nonEmptyRow(idx),nonEmptyCol(idx));
     toWrite = [GaborMagStats{linearVol}];
-    features = [features; reshape(toWrite,[56,length(toWrite)/(56)])'];      
+    features = [features; reshape(toWrite,[112,length(toWrite)/(112)])'];      
 end
     
 end

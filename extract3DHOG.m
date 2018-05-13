@@ -1,6 +1,31 @@
-function [ HOGimage ] = extract3DHOG( image, class, radius ) 
+function [ HOG_to_write ] = extract3DHOG( image, class, radius ) 
 % extract Histogram of Oriented Gradients from each voksel
 % Radius of circular pattern used to select neighbors for each pixel in the input image
+
+if ~isa(image,'numeric') || ~isa(class,'numeric') || ~isa(radius,'numeric')
+    error('extractStats:InputMustBeNumeric', ...
+        'Coefficients must be numeric.');
+end
+
+%% Pobranie wymiarów obrazu. 
+% [x, y, z] = size(image);
+
+image = cat(3, repmat(image(:,:,1), 1, 1, radius), image);
+image = cat(3, image, repmat(image(:, :, size( image, 3 )), 1, 1, radius));
+image = cat(2, repmat(image(:,1,:), 1, radius, 1), image);
+image = cat(2, image, repmat(image(:, size( image, 2 ), :), 1, radius, 1));
+image = cat(1, repmat(image(1,:,:), radius, 1, 1), image);
+image = cat(1, image, repmat(image(size( image, 1 ), :, :), radius, 1, 1));
+
+class = cat(3, repmat(class(:,:,1), 1, 1, radius), class);
+class = cat(3, class, repmat(class(:, :, size( class, 3 )), 1, 1, radius));
+class = cat(2, repmat(class(:,1,:), 1, radius, 1), class);
+class = cat(2, class, repmat(class(:, size( class, 2 ), :), 1, radius, 1));
+class = cat(1, repmat(class(1,:,:), radius, 1, 1), class);
+class = cat(1, class, repmat(class(size( class, 1 ), :, :), radius, 1, 1));
+
+nonEmptyIdx = find(~(class == 0));
+[nonEmptyRow,nonEmptyCol,nonEmptyVol] = ind2sub(size(image),nonEmptyIdx);
 
 % % Oliczamy gradient wzglêdem ka¿dego piksela
 % [gx, gy, gz] = gradient(single(image));
@@ -11,21 +36,27 @@ function [ HOGimage ] = extract3DHOG( image, class, radius )
 % % Obliczamy normê z gradientów
 % gradient_norm = sqrt(gx.^2 + gy.^2 + gz.^2);
 
-% Liczba binów w histogramie
+%% Liczba binów w histogramie
 SectionNum = 9;
 
 % Inicjalizacja danych wyjœciowych
 HOGimage = cell(size(image));
-HOGimage(find(cellfun(@isempty, HOGimage))) = {[0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]};
+% HOGimage(find(cellfun(@isempty, HOGimage))) = {[0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]};
 
+radius = [radius radius];
 % Przechodzimy przez ca³y du¿y obraz
-for row = (1 + radius) : (size(image, 1) - radius)
-    row
-	for col = (1 + radius) : (size(image, 2) - radius)
-        for vol = (1 + radius) : (size(image, 3) - radius)
+% for row = (1 + radius) : (size(image, 1) - radius)
+%     row
+% 	for col = (1 + radius) : (size(image, 2) - radius)
+%         for vol = (1 + radius) : (size(image, 3) - radius)
+
+for i = 1 : length(nonEmptyIdx)
+    row = nonEmptyRow(i);
+    col = nonEmptyCol(i);
+    vol = nonEmptyVol(i);
             
             % sprawdzenie, czy piksel nie nalezy do t³a
-            if class(row,col,vol) > 0
+            % if class(row,col,vol) > 0
                 
                 % Sprawdzany piksel
                 centerPixel = image(row, col, vol);
@@ -144,10 +175,13 @@ for row = (1 + radius) : (size(image, 1) - radius)
                 % osobnych cellach
                 HOGimage{row, col, vol} = [histogram_acos histogram_atan];
                
-            end
-        end
-	end  
+%             end
+%         end
+% 	end  
 end 
+
+HOG_to_write = [HOGimage{nonEmptyIdx}];
+HOG_to_write = reshape(HOG_to_write,[18,length(HOG_to_write)/18])';
 
 end
 

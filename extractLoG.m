@@ -1,12 +1,8 @@
-function [ features ] = extractLoG( image, nonEmptyRow, nonEmptyCol, nonEmptyVol ) 
+function [ features ] = extractLoG( image, nonEmptyRow, nonEmptyCol, nonEmptyVol, radius ) 
 
-image = (single(image)); 
 nonEmptyVolsingle = nonEmptyVol(diff([0 nonEmptyVol'])~=0);
 nonEmptyVolfirst = nonEmptyVol(1);
 features = [];
-
-%% do obliczenia statystyk bierzemy bloki 3x3
-radius = 2;
 
 for vol = nonEmptyVolsingle(1) : nonEmptyVolsingle(end)
     vol
@@ -49,5 +45,13 @@ for vol = nonEmptyVolsingle(1) : nonEmptyVolsingle(end)
 end
     
 end
+
+% sigma = 30;
+% G1=fspecial('log',[round(6*sigma), round(6*sigma)], sigma);
+% [X,Y] = meshgrid(1:size(G1,2), 1:size(G1,1));
+% mesh(X, Y, G1);
+% xlabel('X'); ylabel('Y'); zlabel('Amplitude');
+% title('3D visualization of the LoG filter');
+% colorbar;
 
 
