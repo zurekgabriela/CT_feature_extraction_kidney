@@ -9,7 +9,6 @@ if ~isa(image,'numeric') || ~isa(class,'numeric') || ~isa(margin,'numeric')
 end
 
 %% Pobranie wymiarów obrazu.
-
 image = cat(3, repmat(image(:,:,1), 1, 1, margin), image);
 image = cat(3, image, repmat(image(:, :, size( image, 3 )), 1, 1, margin));
 image = cat(2, repmat(image(:,1,:), 1, margin, 1), image);
@@ -32,10 +31,6 @@ stats = cell(size(image));
 % stats(find(cellfun(@isempty, stats))) = {[0 0 0 0 0]};
 
 for i = 1 : length(nonEmptyIdx)
-<<<<<<< HEAD
-=======
-    
->>>>>>> origin/master
     row = nonEmptyRow(i);
     col = nonEmptyCol(i);
     vol = nonEmptyVol(i);

@@ -56,7 +56,6 @@ for i = 1 : length(nonEmptyIdx)
 
     % Dane GLCM wpisane do wektora
     GLCM{row, col, vol} = [Contrast Correlation Energy Homogeneity];                             
-
 end 
 
 % przekszta³cenie stats z komórki do wektora

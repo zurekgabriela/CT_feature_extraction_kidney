@@ -13,11 +13,11 @@ if ~isdir(myFolder)
   return;
 end
 
-list = dir('samples');
+list = dir('features');
 iter = 1;
-for i = 1:length(list);
+for i = 1:length(list)
     if ~strcmp(list(i).name, '.') && ~strcmp(list(i).name, '..')
-        tempStruct = load(fullfile('..', 'CT_feature_extraction_kidney', 'samples', list(i).name));
+        tempStruct = load(fullfile('..', 'CT_feature_extraction_kidney', 'features', list(i).name));
         featureStruct(iter).name = list(i).name(1:end-4);
         featureStruct(iter).features = tempStruct(1).features;
         iter = iter + 1;
@@ -25,12 +25,11 @@ for i = 1:length(list);
 end
 
 clear i list myFolder tempStruct iter;
-
 %% Analiza ró¿nic pomiêdzy guzem i nerk¹
 tumor = [];
 kidney = [];
 for i = 1 : length(featureStruct)
-    
+    i
     featureStruct(i).kidney = zeros(4, size(featureStruct(1).features, 2));
     featureStruct(i).tumor = zeros(4, size(featureStruct(1).features, 2));
     
@@ -61,16 +60,9 @@ samples = [];
 for i = 2:length(featureStruct)
     samples = [samples; featureStruct(i).features];
 end
-
-testsamples = []; % obraz spoza zbioru treningowego
-for i = 1
-    testsamples = [testsamples; featureStruct(i).features];
-end
-
 % Mix kolejnoœci danych
 r = randperm(size(samples,1));
 samples = samples(r,:);
-
 % Missing data
 samples(isinf(samples)) = NaN; % Inf is treated as missing data
 [nanrows, ~, ~] = find(isnan(samples));
@@ -80,11 +72,8 @@ samples(nanrows, :) = [];
 sumOut = 0;
 for k = 5 : size(samples, 2)
     k
-%     samples(:,k) = samples(:,k)/norm(samples(:,k));
-%     testsamples(:,k) = testsamples(:,k)/norm(testsamples(:,k));
-    
-    samples(:,k) = normalizeToRange(samples(:,k), 0, 10);
-    testsamples(:,k) = normalizeToRange(testsamples(:,k), 0, 10);
+    % Normalizacja
+    samples(:,k) = zscore(samples(:,k));
     
     % Outlier removal
     % Median Absolute Deviation
@@ -93,25 +82,25 @@ for k = 5 : size(samples, 2)
     MAD = median(abs(samples(:, k) - medianValue));
     outliers = 0.6745*(samples(:, k) - medianValue)/MAD > threshold;
     samples(find(outliers == 1), :) = [];
-    sumOut = sumOut + sum(outliers);
+    sumOut = sumOut + sum(outliers);  
 end
 
 clear k nanrows r i featureStruct threshold medianValue MAD outliers;
 
-% Do klasyfikacji bierzemy np co 20 próbkê, aby zmniejszyæ z³o¿onoœæ obliczeniow¹
+%% Do klasyfikacji bierzemy np co 20 próbkê, aby zmniejszyæ z³o¿onoœæ obliczeniow¹
 ind = [1 : 20 : size(samples)];
 samples = samples(ind, :);
 clear ind clear;
 
-% Feature selection
+%% Feature selection
 % Convert input to table
-inputTable = array2table(samples, 'VariableNames', {'Row', 'Col', 'Vol', 'Class', 'norm', 'LBP_1', 'LBP_2', 'LBP_3', 'LBP_4', 'LBP_5', 'LBP_6', 'LBP_7', 'LBP_8', 'LBP_9', 'LBP_10', 'LBP_11', 'LBP_12', 'LBP_13', 'LBP_14', 'mean', 'std', 'entropy', 'skewness', 'kurtosis', 'contrast', 'correlation', 'energy', 'homogenity', 'HOG_1', 'HOG_2', 'HOG_3', 'HOG_4', 'HOG_5', 'HOG_6', 'HOG_7', 'HOG_8', 'HOG_9', 'HOG_10', 'HOG_11', 'HOG_12', 'HOG_13', 'HOG_14', 'HOG_15', 'HOG_16', 'HOG_17', 'HOG_18',...
-    'Gabor_1', 'Gabor_2', 'Gabor_3', 'Gabor_4', 'Gabor_5', 'Gabor_6', 'Gabor_7', 'Gabor_8', 'Gabor_9', 'Gabor_10', 'Gabor_11', 'Gabor_12', 'Gabor_13', 'Gabor_14', 'Gabor_15', 'Gabor_16', 'Gabor_17', 'Gabor_18', 'Gabor_19', 'Gabor_20', 'Gabor_21', 'Gabor_22', 'Gabor_23', 'Gabor_24', 'Gabor_25', 'Gabor_26', 'Gabor_27', 'Gabor_28', 'Gabor_29', 'Gabor_30', 'Gabor_31', 'Gabor_32', 'Gabor_33', 'Gabor_34', 'Gabor_35', 'Gabor_36', 'Gabor_37', 'Gabor_38', 'Gabor_39', 'Gabor_40', 'Gabor_41', 'Gabor_42', 'Gabor_43', 'Gabor_44', 'Gabor_45', 'Gabor_46', 'Gabor_47', 'Gabor_48', 'Gabor_49', 'Gabor_50', 'Gabor_51', 'Gabor_52', 'Gabor_53', 'Gabor_54', 'Gabor_55', 'Gabor_56', ...
-    'LoG_1', 'LoG_2', 'LoG_3', 'LoG_4', 'LoG_5', 'LoG_6', 'LoG_7', 'LoG_8', 'LoG_9', 'LoG_10', 'LoG_11', 'LoG_12', 'LoG_13', 'LoG_14', 'LoG_15', 'LoG_16'});
-predictorNames = {'norm', 'LBP_1', 'LBP_2', 'LBP_3', 'LBP_4', 'LBP_5', 'LBP_6', 'LBP_7', 'LBP_8', 'LBP_9', 'LBP_10', 'LBP_11', 'LBP_12', 'LBP_13', 'LBP_14', 'mean', 'std', 'entropy', 'skewness', 'kurtosis', 'contrast', 'correlation', 'energy', 'homogenity', 'HOG_1', 'HOG_2', 'HOG_3', 'HOG_4', 'HOG_5', 'HOG_6', 'HOG_7', 'HOG_8', 'HOG_9', 'HOG_10', 'HOG_11', 'HOG_12', 'HOG_13', 'HOG_14', 'HOG_15', 'HOG_16', 'HOG_17', 'HOG_18',...
-    'Gabor_1', 'Gabor_2', 'Gabor_3', 'Gabor_4', 'Gabor_5', 'Gabor_6', 'Gabor_7', 'Gabor_8', 'Gabor_9', 'Gabor_10', 'Gabor_11', 'Gabor_12', 'Gabor_13', 'Gabor_14', 'Gabor_15', 'Gabor_16', 'Gabor_17', 'Gabor_18', 'Gabor_19', 'Gabor_20', 'Gabor_21', 'Gabor_22', 'Gabor_23', 'Gabor_24', 'Gabor_25', 'Gabor_26', 'Gabor_27', 'Gabor_28', 'Gabor_29', 'Gabor_30', 'Gabor_31', 'Gabor_32', 'Gabor_33', 'Gabor_34', 'Gabor_35', 'Gabor_36', 'Gabor_37', 'Gabor_38', 'Gabor_39', 'Gabor_40', 'Gabor_41', 'Gabor_42', 'Gabor_43', 'Gabor_44', 'Gabor_45', 'Gabor_46', 'Gabor_47', 'Gabor_48', 'Gabor_49', 'Gabor_50', 'Gabor_51', 'Gabor_52', 'Gabor_53', 'Gabor_54', 'Gabor_55', 'Gabor_56', ...
-    'LoG_1', 'LoG_2', 'LoG_3', 'LoG_4', 'LoG_5', 'LoG_6', 'LoG_7', 'LoG_8', 'LoG_9', 'LoG_10', 'LoG_11', 'LoG_12', 'LoG_13', 'LoG_14', 'LoG_15', 'LoG_16'};
-% predictorNames = {'LoG_1', 'LoG_2', 'LoG_3', 'LoG_4', 'LoG_5', 'LoG_6', 'LoG_7', 'LoG_8', 'LoG_9', 'LoG_10', 'LoG_11', 'LoG_12', 'LoG_13', 'LoG_14', 'LoG_15', 'LoG_16'};
+inputTable = array2table(samples, 'VariableNames', {'Row', 'Col', 'Vol', 'Class', 'norm', 'LBP_1', 'LBP_2', 'LBP_3', 'LBP_4', 'LBP_5', 'LBP_6', 'LBP_7', 'LBP_8', 'LBP_9', 'LBP_10', 'LBP_11', 'LBP_12', 'LBP_13', 'LBP_14'}), %'mean', 'std', 'entropy', 'skewness', 'kurtosis', 'contrast', 'correlation', 'energy', 'homogenity', 'HOG_1', 'HOG_2', 'HOG_3', 'HOG_4', 'HOG_5', 'HOG_6', 'HOG_7', 'HOG_8', 'HOG_9', 'HOG_10', 'HOG_11', 'HOG_12', 'HOG_13', 'HOG_14', 'HOG_15', 'HOG_16', 'HOG_17', 'HOG_18',...
+%     'Gabor_1', 'Gabor_2', 'Gabor_3', 'Gabor_4', 'Gabor_5', 'Gabor_6', 'Gabor_7', 'Gabor_8', 'Gabor_9', 'Gabor_10', 'Gabor_11', 'Gabor_12', 'Gabor_13', 'Gabor_14', 'Gabor_15', 'Gabor_16', 'Gabor_17', 'Gabor_18', 'Gabor_19', 'Gabor_20', 'Gabor_21', 'Gabor_22', 'Gabor_23', 'Gabor_24', 'Gabor_25', 'Gabor_26', 'Gabor_27', 'Gabor_28', 'Gabor_29', 'Gabor_30', 'Gabor_31', 'Gabor_32', 'Gabor_33', 'Gabor_34', 'Gabor_35', 'Gabor_36', 'Gabor_37', 'Gabor_38', 'Gabor_39', 'Gabor_40', 'Gabor_41', 'Gabor_42', 'Gabor_43', 'Gabor_44', 'Gabor_45', 'Gabor_46', 'Gabor_47', 'Gabor_48', 'Gabor_49', 'Gabor_50', 'Gabor_51', 'Gabor_52', 'Gabor_53', 'Gabor_54', 'Gabor_55', 'Gabor_56', ...
+%     'LoG_1', 'LoG_2', 'LoG_3', 'LoG_4', 'LoG_5', 'LoG_6', 'LoG_7', 'LoG_8', 'LoG_9', 'LoG_10', 'LoG_11', 'LoG_12', 'LoG_13', 'LoG_14', 'LoG_15', 'LoG_16'});
+% predictorNames = {'norm', 'LBP_1', 'LBP_2', 'LBP_3', 'LBP_4', 'LBP_5', 'LBP_6', 'LBP_7', 'LBP_8', 'LBP_9', 'LBP_10', 'LBP_11', 'LBP_12', 'LBP_13', 'LBP_14', 'mean', 'std', 'entropy', 'skewness', 'kurtosis', 'contrast', 'correlation', 'energy', 'homogenity', 'HOG_1', 'HOG_2', 'HOG_3', 'HOG_4', 'HOG_5', 'HOG_6', 'HOG_7', 'HOG_8', 'HOG_9', 'HOG_10', 'HOG_11', 'HOG_12', 'HOG_13', 'HOG_14', 'HOG_15', 'HOG_16', 'HOG_17', 'HOG_18',...
+%     'Gabor_1', 'Gabor_2', 'Gabor_3', 'Gabor_4', 'Gabor_5', 'Gabor_6', 'Gabor_7', 'Gabor_8', 'Gabor_9', 'Gabor_10', 'Gabor_11', 'Gabor_12', 'Gabor_13', 'Gabor_14', 'Gabor_15', 'Gabor_16', 'Gabor_17', 'Gabor_18', 'Gabor_19', 'Gabor_20', 'Gabor_21', 'Gabor_22', 'Gabor_23', 'Gabor_24', 'Gabor_25', 'Gabor_26', 'Gabor_27', 'Gabor_28', 'Gabor_29', 'Gabor_30', 'Gabor_31', 'Gabor_32', 'Gabor_33', 'Gabor_34', 'Gabor_35', 'Gabor_36', 'Gabor_37', 'Gabor_38', 'Gabor_39', 'Gabor_40', 'Gabor_41', 'Gabor_42', 'Gabor_43', 'Gabor_44', 'Gabor_45', 'Gabor_46', 'Gabor_47', 'Gabor_48', 'Gabor_49', 'Gabor_50', 'Gabor_51', 'Gabor_52', 'Gabor_53', 'Gabor_54', 'Gabor_55', 'Gabor_56', ...
+%     'LoG_1', 'LoG_2', 'LoG_3', 'LoG_4', 'LoG_5', 'LoG_6', 'LoG_7', 'LoG_8', 'LoG_9', 'LoG_10', 'LoG_11', 'LoG_12', 'LoG_13', 'LoG_14', 'LoG_15', 'LoG_16'};
+predictorNames = {'LoG_1', 'LoG_2', 'LoG_3', 'LoG_4', 'LoG_5', 'LoG_6', 'LoG_7', 'LoG_8', 'LoG_9', 'LoG_10', 'LoG_11', 'LoG_12', 'LoG_13', 'LoG_14', 'LoG_15', 'LoG_16'};
 predictors = inputTable(:, predictorNames);
 response = inputTable.Class;
 numericPredictors = table2array(varfun(@double, predictors));

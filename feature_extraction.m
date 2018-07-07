@@ -5,6 +5,7 @@ clear;  % Erase all existing variables.
 workspace;  % Make sure the workspace panel is showing.
 
 %% WCZYTYWANIE DANYCH
+% Treningowe
 
 path = 'Data';
 list = dir(path);
@@ -24,55 +25,73 @@ for i = 1:length(list);
     end    
     clear patientPath; clear infoCT; clear dim; clear i; clear I; clear M; 
 end
-% CT = CT(3:length(list));
-% Roboczo jeden pacjent, by nie zajmowaæ zbyt du¿o pamiêci
-CT = CT(3:3);
+
+% CT = CT(4:4);
+CT = CT(3:length(list));
+clear list;
+
+%% WCZYTYWANIE DANYCH
+% Testowe
+
+path = 'Data_Test';
+list = dir(path);
+[~,index] = sortrows({list.name}.'); list = list(index); clear index
+CT = struct('patient', [], 'image', [], 'class',[]);
+
+for i = 1:length(list);
+    patientPath = [path '\' list(i).name];    
+    if ~strcmp(list(i).name, '.') && ~strcmp(list(i).name, '..')
+        I = niftiread([patientPath '\CT.nii']);
+        M = niftiread([patientPath '\Nerka i guz.nii']);
+        CT(i).image = I;
+        CT(i).class = M;
+        CT(i).patient = list(i).name;       
+    end    
+    clear patientPath; clear i; clear I; clear M; 
+end
+
+CT = CT(3:length(list));
 clear list;
 
 %% PRZEKSZTA£CENIE DANYCH
 
 for i = 1:length(CT)
-    
+    i
+    nonEmptyIdx = find(~(CT(i).class==0));
+    [nonEmptyRow,nonEmptyCol,nonEmptyVol] = ind2sub(size(CT(i).image),nonEmptyIdx);
     % Przekszta³cenie klas obrazów tak, by nerka by³a oznaczona wartoœci¹ 1, a guz wartoœci¹ 2
-    % class: nerka = 1; guz = 2
-    CT(i).mask = CT(i).class;    
-    for a = 1:size(CT(i).class,1)
-        for b = 1:size(CT(i).class,2)
-            for c = 1:size(CT(i).class,3)
-                if (CT(i).class(a,b,c) == 1) || (CT(i).class(a,b,c) == 6)
-                    CT(i).class(a,b,c) = 1;
-                    CT(i).mask(a,b,c) = 1;
-                elseif (CT(i).class(a,b,c) == 2) || (CT(i).class(a,b,c) == 3)
-                    CT(i).class(a,b,c) = 2;
-                    CT(i).mask(a,b,c) = 1;
-                end
-            end
+    % class: nerka = 1; guz = 2 
+    for j = 1 : length(nonEmptyIdx)
+        row = nonEmptyRow(j);
+        col = nonEmptyCol(j);
+        vol = nonEmptyVol(j);
+        if (CT(i).class(row, col, vol) == 1) || (CT(i).class(row, col, vol) == 6)
+            CT(i).class(row, col, vol) = 1;
+        elseif (CT(i).class(row, col, vol) == 2) || (CT(i).class(row, col, vol) == 3)
+            CT(i).class(row, col, vol) = 2;
         end
     end
+
     CT(i).class = single(CT(i).class);
-    clearvars a b c; 
+    clearvars row col vol; 
     sprintf('przekszta³cono klasê %s',CT(i).patient)
-   
-    % Nak³adanie maski na obraz - wyodrêbnienie wokseli, które zawieraj¹ tylko nerkê i guz
-    CT(i).mask = CT(i).mask.*CT(i).image;  
-    sprintf('na³o¿ono maskê na obraz %s',CT(i).patient)
 
-    % Normalizacja typu Z
-    nonEmptyIdx = find(~(CT(i).class==0));
-    CT(i).norm = zeros(size(CT(i).mask));
-    CT(i).norm(nonEmptyIdx) = zscore(CT(i).mask(nonEmptyIdx), 1);
-    sprintf('znormalizowano dane %s',CT(i).patient)   
-    
+    % Normalizacja typu Z   
+    [~, mu, sigma] = zscore(CT(i).image(nonEmptyIdx), 1);
+    CT(i).norm = zeros(size(CT(i).image));
+    CT(i).norm = (CT(i).image-mu)./sigma;
+    sprintf('znormalizowano dane %s',CT(i).patient) 
+    CT(i).norm = single(CT(i).norm);
+     
     % Czyszczenie pamiêci
-    CT(i).image = []; CT(i).mask = [];
+    CT(i).image = [];  
 end
-
-clear i; CT = rmfield(CT, {'image', 'mask'});
+clear i j mu sigma path; CT = rmfield(CT, {'image'});
 
 %% EKSTRAKCJA CECH CHARAKTERYSTYCZNYCH
 
-for i = 1:length(CT)   
-    
+for i = 1:length(CT) 
+    i   
     %% Przekszta³cenie próbek w wektor do klasyfikacji
     % znalezienie indeksów oznaczaj¹cych nerkê i guza (bez t³a)
     nonEmptyIdx = find(~(CT(i).class == 0));
@@ -82,105 +101,79 @@ for i = 1:length(CT)
     
     sprintf('wyszukano indeksy i zapisano dane Row, Col, Vol, class, norm do wektora cech %s',CT(i).patient)
     
-    %% 3D Local Binary Pattern 
-    [CT(i).LBP] = extractLBP( CT(i).norm, CT(i).class, 3 ); 
-    sprintf('obliczono LBP %s',CT(i).patient)
+%     %% 3D Local Binary Pattern 
+%     [CT(i).LBP] = extractLBP( CT(i).norm, CT(i).class, 10 ); 
+%     sprintf('obliczono LBP %s',CT(i).patient)
+%     
+%     % zapisanie danych LBP do wektora cech
+%     CT(i).samples = [CT(i).samples single(CT(i).LBP)];
+%     sprintf('zapisano dane LBP w wektorze samples %s',CT(i).patient)
+%     
+%     CT(i).LBP = [];
     
-    % przekszta³cenie lbp z komórki do wektora
-    LBP_to_write = [CT(i).LBP{nonEmptyIdx}];
-    sprintf('wpisano LBP %s',CT(i).patient)
-    LBP_to_write = reshape(LBP_to_write,[14,length(LBP_to_write)/14])';
-    sprintf('przekszta³cono w tablicê %s',CT(i).patient)
+%     %% Stats  - œrednia, odchylenie standardowe, wariancja, entropia,
+%     % asymetria, rozproszenie z ramki o wymiarach (2r + 1)
+%     CT(i).stats = extractStats( double(CT(i).norm), CT(i).class, 35 );
+%     sprintf('obliczono statystyki 3D %s',CT(i).patient)
+%        
+%     % zapisanie danych do wektora
+%     CT(i).samples = [CT(i).samples single(CT(i).stats)];
+%     sprintf('zapisano dane stats w wektorze samples %s',CT(i).patient)
+%     
+%     CT(i).stats = []; 
     
-    % zapisanie danych LBP do wektora cech
-    CT(i).patientID = [repelem([CT(i).patient],length(nonEmptyIdx),1)];
-    CT(i).samples = [CT(i).samples single(LBP_to_write)];
-    sprintf('zapisano dane LBP w wektorze samples %s',CT(i).patient)
-    
-    CT(i).LBP = []; CT(i).LBPnum = []; clear LBP_to_write;
-    
-    %% Stats  - œrednia, odchylenie standardowe, wariancja, entropia,
-    % asymetria, rozproszenie z ramki o wymiarach (2r + 1)
-    CT(i).stats = extractStats( double(CT(i).norm), CT(i).class, 3 );
-    sprintf('obliczono statystyki 3D %s',CT(i).patient)
-    
-    % przekszta³cenie stats z komórki do wektora
-    stats_to_write = [CT(i).stats{nonEmptyIdx}];
-    sprintf('wpisano stats %s',CT(i).patient)
-    stats_to_write = reshape(stats_to_write,[5,length(stats_to_write)/5])';
-    sprintf('przekszta³cono w tablicê %s',CT(i).patient)
-    
-    % zapisanie danych do wektora
-    CT(i).samples = [CT(i).samples single(stats_to_write)];
-    sprintf('zapisano dane stats w wektorze samples %s',CT(i).patient)
-    
-    CT(i).stats = []; clear stats_to_write;
-    
-    %% GLCM -contrast, homogenity, correlation, energy
-    CT(i).GLCM = extractGLCM( double(CT(i).norm), CT(i).class, 11 );
-    sprintf('obliczono GLCM %s',CT(i).patient)
-
-    % przekszta³cenie stats z komórki do wektora
-    GLCM_to_write = [CT(i).GLCM{nonEmptyIdx}];
-    sprintf('wpisano GLCM %s',CT(i).patient)
-    GLCM_to_write = reshape(GLCM_to_write,[4,length(GLCM_to_write)/4])';
-    sprintf('przekszta³cono w tablicê %s',CT(i).patient)
-
-    % zapisanie danych do wektora
-    CT(i).samples = [CT(i).samples single(GLCM_to_write)];
-    sprintf('zapisano dane GLCM w wektorze samples %s',CT(i).patient)
-
-    CT(i).GLCM = []; clear GLCM_to_write;
-   
-    %% 3D Histogram Zorientowanych Gradientów
-    CT(i).HOG = extract3DHOG( single(CT(i).norm), CT(i).class, [2 2]);
-    
-    % przekszta³cenie HOG z komórki do wektora
-    HOG_to_write = [CT(i).HOG{nonEmptyIdx}];
-    HOG_to_write = reshape(HOG_to_write,[18,length(HOG_to_write)/18])';
-    sprintf('wpisano HOG %s',CT(i).patient);
-    sprintf('przekszta³cono w HOG tablicê %s',CT(i).patient)
-    
-    % zapisanie danych do wektora
-    CT(i).samples = [CT(i).samples single(HOG_to_write)];
-    sprintf('zapisano dane HOG w wektorze samples %s',CT(i).patient)
-    
-    CT(i).HOG = []; clear HOG_to_write;
-     
+%     %% GLCM - contrast, homogenity, correlation, energy
+%     CT(i).GLCM = extractGLCM( double(CT(i).norm), CT(i).class, 10 );
+%     sprintf('obliczono GLCM %s',CT(i).patient)
+% 
+%     % zapisanie danych do wektora
+%     CT(i).samples = [CT(i).samples single(CT(i).GLCM)];
+%     sprintf('zapisano dane GLCM w wektorze samples %s',CT(i).patient)
+% 
+%     CT(i).GLCM = []; 
+%     
+%     %% 3D Histogram Zorientowanych Gradientów
+%     CT(i).HOG = extract3DHOG( single(CT(i).norm), CT(i).class, 10);
+%     sprintf('obliczono HOG %s',CT(i).patient)
+%     
+%     % zapisanie danych do wektora
+%     CT(i).samples = [CT(i).samples single(CT(i).HOG)];
+%     sprintf('zapisano dane HOG w wektorze samples %s',CT(i).patient)
+%     
+%     CT(i).HOG = []; 
+%      
     %% Filtry Gabora
-    [CT(i).GaborMag] = extractGaborFilter( single(CT(i).norm), nonEmptyRow, nonEmptyCol, nonEmptyVol );
-    sprintf('obliczono filtry Gabora %s',CT(i).patient)
-    
+
+    [CT(i).Gabor] = extractGaborFilter( single(CT(i).norm), CT(i).class, 10 );
+    sprintf('obliczono Gabor Filter %s',CT(i).patient)
+
     % zapisanie danych do wektora
-    CT(i).samples = [CT(i).samples single(CT(i).GaborMag)];
-    sprintf('zapisano filtry Gabora w wektorze samples %s',CT(i).patient)
-    
-    CT(i).GaborMag = [];
+    CT(i).samples = [CT(i).samples single(CT(i).Gabor)];
+    sprintf('zapisano Gabor Filter w wektorze samples %s',CT(i).patient)
+
+    CT(i).Gabor = [];
     
     %% Laplacian of Gaussian
-
-    [CT(i).LoG] = extractLoG( single(CT(i).norm), nonEmptyRow, nonEmptyCol, nonEmptyVol );
-    sprintf('obliczono LoG %s',CT(i).patient)
-
-    % zapisanie danych do wektora
-    CT(i).samples = [CT(i).samples single(CT(i).LoG)];
-    sprintf('zapisano LoG w wektorze samples %s',CT(i).patient)
-
-    CT(i).LoG = [];
+% 
+%     [CT(i).LoG] = extractLoG( single(CT(i).norm), CT(i).class, 10 );
+%     sprintf('obliczono LoG %s',CT(i).patient)
+% 
+%     % zapisanie danych do wektora
+%     CT(i).samples = [CT(i).samples single(CT(i).LoG)];
+%     sprintf('zapisano LoG w wektorze samples %s',CT(i).patient)
+% 
+%     CT(i).LoG = [];
+    
+    %% Zapisanie danych
+    % do folderu features
+    fname = sprintf('samples_%s', CT(i).patient);
+    vname = 'features';
+    eval([vname '= CT(i).samples;']);
+    save(strcat('features\', fname), vname);
+    sprintf('zapisano dane w pliku samples_%s',CT(i).patient)
     
 end
 
-%% Zapisanie danych
-% do folderu samples
-for i = 1:length(CT)
-    fname = sprintf('samples_%s', CT(i).patient);
-    % vname = genvarname(sprintf('samples_%s', CT(i).patient));
-    vname = 'features';
-    vname = genvarname(sprintf('samples_%s', CT(i).patient));
-    eval([vname '= CT(i).samples;']);
-    save(strcat('samples\', fname), vname);
-end
-
-% Czyszczenie pamiêci z niepotrzebnych danych
+%% Czyszczenie pamiêci z niepotrzebnych danych
 clear fname vname i nonEmptyIdx nonEmptyRow nonEmptyCol nonEmptyVol
-CT = rmfield(CT, {'LBP', 'LBPnum', 'stats', 'HOG', 'GaborMag', 'LoG', 'GLCM', 'class', 'norm', 'patientID'}); 
+CT = rmfield(CT, {'LBP', 'stats', 'HOG', 'GaborMag', 'LoG', 'GLCM', 'class', 'norm', 'patientID'}); 
